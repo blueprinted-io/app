@@ -7,6 +7,7 @@ import { LoginPage } from "@/pages/LoginPage";
 import { CallbackPage } from "@/pages/CallbackPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { ProfilePage } from "@/pages/ProfilePage";
+import { TasksPage } from "@/pages/TasksPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
 const queryClient = new QueryClient({
@@ -39,7 +40,7 @@ export function App() {
               <Route index element={<DashboardPage />} />
               <Route path="profile" element={<ProfilePage />} />
               {/* Stub routes — screens added in subsequent sessions */}
-              <Route path="tasks/*" element={<ComingSoon label="Tasks" />} />
+              <Route path="tasks" element={<TasksPage />} />
               <Route path="workflows/*" element={<ComingSoon label="Workflows" />} />
               <Route path="principles/*" element={<ComingSoon label="Principles" />} />
               <Route path="facts/*" element={<ComingSoon label="Facts & Concepts" />} />
