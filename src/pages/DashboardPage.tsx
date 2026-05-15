@@ -2,7 +2,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export function DashboardPage() {
   const { user } = useAuth();
-  const roles: string[] = (user?.profile["blueprinted_roles"] as string[]) ?? [];
+  const roles: string[] = (user?.profile["groups"] as string[]) ?? [];
   const name = user?.profile.name ?? user?.profile.email ?? "there";
 
   return (

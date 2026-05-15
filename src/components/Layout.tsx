@@ -58,7 +58,7 @@ function NavItemLink({ item }: { item: NavItem }) {
 
 export function Layout() {
   const { user } = useAuth();
-  const roles: string[] = (user?.profile["blueprinted_roles"] as string[]) ?? [];
+  const roles: string[] = (user?.profile["groups"] as string[]) ?? [];
   const isAdmin = roles.includes("admin");
   const displayName = user?.profile.name ?? user?.profile.email ?? "User";
 
