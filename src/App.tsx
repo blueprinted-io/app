@@ -8,6 +8,8 @@ import { CallbackPage } from "@/pages/CallbackPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { TasksPage } from "@/pages/TasksPage";
+import { WorkflowsPage } from "@/pages/WorkflowsPage";
+import { PrinciplesPage } from "@/pages/PrinciplesPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
 const queryClient = new QueryClient({
@@ -41,8 +43,8 @@ export function App() {
               <Route path="profile" element={<ProfilePage />} />
               {/* Stub routes — screens added in subsequent sessions */}
               <Route path="tasks" element={<TasksPage />} />
-              <Route path="workflows/*" element={<ComingSoon label="Workflows" />} />
-              <Route path="principles/*" element={<ComingSoon label="Principles" />} />
+              <Route path="workflows" element={<WorkflowsPage />} />
+              <Route path="principles" element={<PrinciplesPage />} />
               <Route path="facts/*" element={<ComingSoon label="Facts & Concepts" />} />
               <Route path="review/*" element={<ComingSoon label="Review Queue" />} />
               <Route path="ingestion/*" element={<ComingSoon label="Ingestion" />} />
