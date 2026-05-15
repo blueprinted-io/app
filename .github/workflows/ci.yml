@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: Typecheck and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+        env:
+          # Build succeeds with placeholder values — auth doesn't run at build time.
+          VITE_OIDC_AUTHORITY: https://auth.example.com/application/o/blueprinted/
+          VITE_OIDC_CLIENT_ID: blueprinted
+          VITE_API_BASE_URL: http://localhost:8000
