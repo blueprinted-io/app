@@ -10,6 +10,7 @@ import { ProfilePage } from "@/pages/ProfilePage";
 import { TasksPage } from "@/pages/TasksPage";
 import { WorkflowsPage } from "@/pages/WorkflowsPage";
 import { PrinciplesPage } from "@/pages/PrinciplesPage";
+import { SearchPage } from "@/pages/SearchPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
 const queryClient = new QueryClient({
@@ -48,7 +49,7 @@ export function App() {
               <Route path="facts/*" element={<ComingSoon label="Facts & Concepts" />} />
               <Route path="review/*" element={<ComingSoon label="Review Queue" />} />
               <Route path="ingestion/*" element={<ComingSoon label="Ingestion" />} />
-              <Route path="search" element={<ComingSoon label="Search" />} />
+              <Route path="search" element={<SearchPage />} />
               <Route path="admin/*" element={<ComingSoon label="Admin" />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
