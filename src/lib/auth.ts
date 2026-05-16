@@ -15,7 +15,7 @@ export const userManager = new UserManager({
   redirect_uri: `${window.location.origin}/callback`,
   post_logout_redirect_uri: `${window.location.origin}/login`,
   response_type: "code",
-  scope: "openid profile email",
+  scope: "openid profile email blueprinted_roles",
   // PKCE is automatic with response_type=code in oidc-client-ts.
   userStore: new WebStorageStateStore({ store: window.sessionStorage }),
   // Silent renew keeps the session alive without a full redirect.

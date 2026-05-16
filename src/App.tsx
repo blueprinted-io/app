@@ -44,6 +44,7 @@ export function App() {
               <Route path="profile" element={<ProfilePage />} />
               {/* Stub routes — screens added in subsequent sessions */}
               <Route path="tasks" element={<TasksPage />} />
+              <Route path="tasks/:recordId" element={<ComingSoon label="Task detail" />} />
               <Route path="workflows" element={<WorkflowsPage />} />
               <Route path="principles" element={<PrinciplesPage />} />
               <Route path="facts/*" element={<ComingSoon label="Facts & Concepts" />} />

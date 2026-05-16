@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,8 @@ interface TaskSummary {
   status: string;
   title: string;
   domain: string;
+  software_name: string | null;
+  software_version: string | null;
   updated_at: string;
 }
 
@@ -73,17 +76,30 @@ export function TasksPage() {
                 <TableRow>
                   <TableHead>Title</TableHead>
                   <TableHead>Domain</TableHead>
+                  <TableHead>Version</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last updated</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell className="font-medium text-gray-900">
-                      {task.title}
+                  <TableRow key={task.id} className="hover:bg-gray-50">
+                    <TableCell>
+                      <Link
+                        to={`/tasks/${task.record_id}`}
+                        className="font-medium text-gray-900 hover:text-brand-amber"
+                      >
+                        {task.title}
+                      </Link>
+                      {task.software_name && (
+                        <p className="mt-0.5 text-xs text-gray-400">
+                          {task.software_name}
+                          {task.software_version ? ` ${task.software_version}` : ""}
+                        </p>
+                      )}
                     </TableCell>
                     <TableCell className="text-gray-500">{task.domain}</TableCell>
+                    <TableCell className="text-gray-400 text-sm">v{task.version}</TableCell>
                     <TableCell>
                       <Badge variant={STATUS_VARIANT[task.status] ?? "outline"}>
                         {task.status}
