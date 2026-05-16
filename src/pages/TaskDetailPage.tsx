@@ -224,33 +224,6 @@ export function TaskDetailPage() {
           <p className="text-gray-700">{task.outcome}</p>
         </Section>
 
-        {/* Steps */}
-        {task.steps.length > 0 && (
-          <Section title={`Steps (${task.steps.length})`}>
-            <div className="space-y-3">
-              {task.steps
-                .slice()
-                .sort((a, b) => a.order_index - b.order_index)
-                .map((step, i) => (
-                  <StepCard key={step.id} step={step} index={i} />
-                ))}
-            </div>
-          </Section>
-        )}
-
-        {/* Tags */}
-        {task.tags.length > 0 && (
-          <Section title="Tags">
-            <div className="flex flex-wrap gap-2">
-              {task.tags.map((tag) => (
-                <Badge key={tag} variant="outline">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </Section>
-        )}
-
         {/* Facts */}
         {task.facts.length > 0 && (
           <Section title="Facts">
@@ -276,6 +249,33 @@ export function TaskDetailPage() {
                 </li>
               ))}
             </ul>
+          </Section>
+        )}
+
+        {/* Procedure */}
+        {task.steps.length > 0 && (
+          <Section title={`Procedure (${task.steps.length} step${task.steps.length === 1 ? "" : "s"})`}>
+            <div className="space-y-3">
+              {task.steps
+                .slice()
+                .sort((a, b) => a.order_index - b.order_index)
+                .map((step, i) => (
+                  <StepCard key={step.id} step={step} index={i} />
+                ))}
+            </div>
+          </Section>
+        )}
+
+        {/* Tags */}
+        {task.tags.length > 0 && (
+          <Section title="Tags">
+            <div className="flex flex-wrap gap-2">
+              {task.tags.map((tag) => (
+                <Badge key={tag} variant="outline">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
           </Section>
         )}
 
