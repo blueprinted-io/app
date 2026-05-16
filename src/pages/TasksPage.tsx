@@ -86,7 +86,7 @@ export function TasksPage() {
                   <TableRow key={task.id} className="hover:bg-gray-50">
                     <TableCell>
                       <Link
-                        to={`/tasks/${task.record_id}`}
+                        to={`/tasks/${task.record_id}/${task.version}`}
                         className="font-medium text-gray-900 hover:text-brand-amber"
                       >
                         {task.title}
