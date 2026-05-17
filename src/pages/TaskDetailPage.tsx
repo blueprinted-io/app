@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ReturnDialog } from "@/components/ReturnDialog";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -160,6 +162,7 @@ function StepCard({ step, index }: { step: TaskStep; index: number }) {
 export function TaskDetailPage() {
   const { recordId, version } = useParams<{ recordId: string; version: string }>();
   const queryClient = useQueryClient();
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
 
   const { data: task, isLoading, error } = useQuery({
     queryKey: ["tasks", recordId, version],
@@ -175,7 +178,17 @@ export function TaskDetailPage() {
   function onSuccess() {
     queryClient.invalidateQueries({ queryKey: ["tasks", recordId, version] });
     queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    queryClient.invalidateQueries({ queryKey: ["review-queue"] });
   }
+
+  const { data: queue } = useQuery({
+    queryKey: ["review-queue"],
+    queryFn: () => api.get<{ items: { id: string; claim: { claimed_by: string } | null }[] }>("/review/queue"),
+    enabled: task?.status === "submitted",
+  });
+
+  const activeClaim = queue?.items.find((i) => i.id === task?.id)?.claim ?? null;
+  const claimHeldByMe = !!currentUser && activeClaim?.claimed_by === currentUser.id;
 
   const submitMutation = useMutation({
     mutationFn: () => api.post(`/tasks/${task!.id}/submit`),
@@ -188,7 +201,12 @@ export function TaskDetailPage() {
   });
 
   const returnMutation = useMutation({
-    mutationFn: () => api.post(`/tasks/${task!.id}/return`),
+    mutationFn: (note: string) => api.post(`/tasks/${task!.id}/return`, { note }),
+    onSuccess: () => { setReturnDialogOpen(false); onSuccess(); },
+  });
+
+  const releaseMutation = useMutation({
+    mutationFn: () => api.post(`/review/tasks/${task!.id}/release`),
     onSuccess,
   });
 
@@ -204,7 +222,11 @@ export function TaskDetailPage() {
         : null;
 
   const isSelf = !!currentUser && !!task && currentUser.id === task.created_by;
-  const anyPending = submitMutation.isPending || confirmMutation.isPending || returnMutation.isPending;
+  const anyPending =
+    submitMutation.isPending ||
+    confirmMutation.isPending ||
+    returnMutation.isPending ||
+    releaseMutation.isPending;
 
   if (isLoading) {
     return (
@@ -279,20 +301,32 @@ export function TaskDetailPage() {
       {task.status === "submitted" && (
         <div className="mb-8 flex items-center gap-3">
           {!isSelf && (
-            <Button
-              onClick={() => confirmMutation.mutate()}
-              disabled={anyPending}
-            >
+            <Button onClick={() => confirmMutation.mutate()} disabled={anyPending}>
               {confirmMutation.isPending ? "Confirming…" : "Confirm"}
             </Button>
           )}
           <Button
             variant="outline"
-            onClick={() => returnMutation.mutate()}
+            onClick={() => setReturnDialogOpen(true)}
             disabled={anyPending}
           >
-            {returnMutation.isPending ? "Returning…" : "Return"}
+            Return
           </Button>
+          <ReturnDialog
+            open={returnDialogOpen}
+            onOpenChange={setReturnDialogOpen}
+            onConfirm={(note) => returnMutation.mutate(note)}
+            isPending={returnMutation.isPending}
+          />
+          {claimHeldByMe && (
+            <Button
+              variant="outline"
+              onClick={() => releaseMutation.mutate()}
+              disabled={anyPending}
+            >
+              {releaseMutation.isPending ? "Releasing…" : "Release claim"}
+            </Button>
+          )}
           {isSelf && (
             <p className="text-sm text-gray-400">
               You cannot confirm your own submission.

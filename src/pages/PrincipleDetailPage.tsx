@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ReturnDialog } from "@/components/ReturnDialog";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -72,6 +74,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export function PrincipleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
 
   const { data: principle, isLoading, error } = useQuery({
     queryKey: ["principles", id],
@@ -87,7 +90,17 @@ export function PrincipleDetailPage() {
   function onSuccess() {
     queryClient.invalidateQueries({ queryKey: ["principles", id] });
     queryClient.invalidateQueries({ queryKey: ["principles"] });
+    queryClient.invalidateQueries({ queryKey: ["review-queue"] });
   }
+
+  const { data: queue } = useQuery({
+    queryKey: ["review-queue"],
+    queryFn: () => api.get<{ items: { id: string; claim: { claimed_by: string } | null }[] }>("/review/queue"),
+    enabled: principle?.status === "submitted",
+  });
+
+  const activeClaim = queue?.items.find((i) => i.id === principle?.id)?.claim ?? null;
+  const claimHeldByMe = !!currentUser && activeClaim?.claimed_by === currentUser.id;
 
   const submitMutation = useMutation({
     mutationFn: () => api.post(`/principles/${principle!.id}/submit`),
@@ -100,7 +113,12 @@ export function PrincipleDetailPage() {
   });
 
   const returnMutation = useMutation({
-    mutationFn: () => api.post(`/principles/${principle!.id}/return`, {}),
+    mutationFn: (note: string) => api.post(`/principles/${principle!.id}/return`, { note }),
+    onSuccess: () => { setReturnDialogOpen(false); onSuccess(); },
+  });
+
+  const releaseMutation = useMutation({
+    mutationFn: () => api.post(`/review/principles/${principle!.id}/release`),
     onSuccess,
   });
 
@@ -116,7 +134,11 @@ export function PrincipleDetailPage() {
         : null;
 
   const isSelf = !!currentUser && !!principle && currentUser.id === principle.created_by;
-  const anyPending = submitMutation.isPending || confirmMutation.isPending || returnMutation.isPending;
+  const anyPending =
+    submitMutation.isPending ||
+    confirmMutation.isPending ||
+    returnMutation.isPending ||
+    releaseMutation.isPending;
 
   if (isLoading) {
     return (
@@ -180,11 +202,26 @@ export function PrincipleDetailPage() {
           )}
           <Button
             variant="outline"
-            onClick={() => returnMutation.mutate()}
+            onClick={() => setReturnDialogOpen(true)}
             disabled={anyPending}
           >
-            {returnMutation.isPending ? "Returning…" : "Return"}
+            Return
           </Button>
+          <ReturnDialog
+            open={returnDialogOpen}
+            onOpenChange={setReturnDialogOpen}
+            onConfirm={(note) => returnMutation.mutate(note)}
+            isPending={returnMutation.isPending}
+          />
+          {claimHeldByMe && (
+            <Button
+              variant="outline"
+              onClick={() => releaseMutation.mutate()}
+              disabled={anyPending}
+            >
+              {releaseMutation.isPending ? "Releasing…" : "Release claim"}
+            </Button>
+          )}
           {isSelf && (
             <p className="text-sm text-gray-400">You cannot confirm your own submission.</p>
           )}

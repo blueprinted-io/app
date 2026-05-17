@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ReturnDialog } from "@/components/ReturnDialog";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -85,6 +87,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export function WorkflowDetailPage() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
 
   const { data: workflow, isLoading, error } = useQuery({
     queryKey: ["workflows", id],
@@ -100,7 +103,17 @@ export function WorkflowDetailPage() {
   function onSuccess() {
     queryClient.invalidateQueries({ queryKey: ["workflows", id] });
     queryClient.invalidateQueries({ queryKey: ["workflows"] });
+    queryClient.invalidateQueries({ queryKey: ["review-queue"] });
   }
+
+  const { data: queue } = useQuery({
+    queryKey: ["review-queue"],
+    queryFn: () => api.get<{ items: { id: string; claim: { claimed_by: string } | null }[] }>("/review/queue"),
+    enabled: workflow?.status === "submitted",
+  });
+
+  const activeClaim = queue?.items.find((i) => i.id === workflow?.id)?.claim ?? null;
+  const claimHeldByMe = !!currentUser && activeClaim?.claimed_by === currentUser.id;
 
   const submitMutation = useMutation({
     mutationFn: () => api.post(`/workflows/${workflow!.id}/submit`),
@@ -113,7 +126,12 @@ export function WorkflowDetailPage() {
   });
 
   const returnMutation = useMutation({
-    mutationFn: () => api.post(`/workflows/${workflow!.id}/return`, {}),
+    mutationFn: (note: string) => api.post(`/workflows/${workflow!.id}/return`, { note }),
+    onSuccess: () => { setReturnDialogOpen(false); onSuccess(); },
+  });
+
+  const releaseMutation = useMutation({
+    mutationFn: () => api.post(`/review/workflows/${workflow!.id}/release`),
     onSuccess,
   });
 
@@ -129,7 +147,11 @@ export function WorkflowDetailPage() {
         : null;
 
   const isSelf = !!currentUser && !!workflow && currentUser.id === workflow.created_by;
-  const anyPending = submitMutation.isPending || confirmMutation.isPending || returnMutation.isPending;
+  const anyPending =
+    submitMutation.isPending ||
+    confirmMutation.isPending ||
+    returnMutation.isPending ||
+    releaseMutation.isPending;
 
   if (isLoading) {
     return (
@@ -193,11 +215,26 @@ export function WorkflowDetailPage() {
           )}
           <Button
             variant="outline"
-            onClick={() => returnMutation.mutate()}
+            onClick={() => setReturnDialogOpen(true)}
             disabled={anyPending}
           >
-            {returnMutation.isPending ? "Returning…" : "Return"}
+            Return
           </Button>
+          <ReturnDialog
+            open={returnDialogOpen}
+            onOpenChange={setReturnDialogOpen}
+            onConfirm={(note) => returnMutation.mutate(note)}
+            isPending={returnMutation.isPending}
+          />
+          {claimHeldByMe && (
+            <Button
+              variant="outline"
+              onClick={() => releaseMutation.mutate()}
+              disabled={anyPending}
+            >
+              {releaseMutation.isPending ? "Releasing…" : "Release claim"}
+            </Button>
+          )}
           {isSelf && (
             <p className="text-sm text-gray-400">You cannot confirm your own submission.</p>
           )}

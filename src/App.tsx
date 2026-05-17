@@ -10,12 +10,14 @@ import { ProfilePage } from "@/pages/ProfilePage";
 import { TasksPage } from "@/pages/TasksPage";
 import { TaskCreatePage } from "@/pages/TaskCreatePage";
 import { TaskDetailPage } from "@/pages/TaskDetailPage";
+import { TaskRedirectPage } from "@/pages/TaskRedirectPage";
 import { WorkflowsPage } from "@/pages/WorkflowsPage";
 import { WorkflowCreatePage } from "@/pages/WorkflowCreatePage";
 import { WorkflowDetailPage } from "@/pages/WorkflowDetailPage";
 import { PrinciplesPage } from "@/pages/PrinciplesPage";
 import { PrincipleCreatePage } from "@/pages/PrincipleCreatePage";
 import { PrincipleDetailPage } from "@/pages/PrincipleDetailPage";
+import { ReviewQueuePage } from "@/pages/ReviewQueuePage";
 import { SearchPage } from "@/pages/SearchPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
@@ -51,6 +53,7 @@ export function App() {
               {/* Stub routes — screens added in subsequent sessions */}
               <Route path="tasks" element={<TasksPage />} />
               <Route path="tasks/new" element={<TaskCreatePage />} />
+              <Route path="tasks/id/:taskId" element={<TaskRedirectPage />} />
               <Route path="tasks/:recordId/:version" element={<TaskDetailPage />} />
               <Route path="workflows" element={<WorkflowsPage />} />
               <Route path="workflows/new" element={<WorkflowCreatePage />} />
@@ -59,7 +62,7 @@ export function App() {
               <Route path="principles/new" element={<PrincipleCreatePage />} />
               <Route path="principles/:id" element={<PrincipleDetailPage />} />
               <Route path="facts/*" element={<ComingSoon label="Facts & Concepts" />} />
-              <Route path="review/*" element={<ComingSoon label="Review Queue" />} />
+              <Route path="review" element={<ReviewQueuePage />} />
               <Route path="ingestion/*" element={<ComingSoon label="Ingestion" />} />
               <Route path="search" element={<SearchPage />} />
               <Route path="admin/*" element={<ComingSoon label="Admin" />} />
