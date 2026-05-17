@@ -8,6 +8,7 @@ import { CallbackPage } from "@/pages/CallbackPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { TasksPage } from "@/pages/TasksPage";
+import { TaskCreatePage } from "@/pages/TaskCreatePage";
 import { TaskDetailPage } from "@/pages/TaskDetailPage";
 import { WorkflowsPage } from "@/pages/WorkflowsPage";
 import { PrinciplesPage } from "@/pages/PrinciplesPage";
@@ -45,6 +46,7 @@ export function App() {
               <Route path="profile" element={<ProfilePage />} />
               {/* Stub routes — screens added in subsequent sessions */}
               <Route path="tasks" element={<TasksPage />} />
+              <Route path="tasks/new" element={<TaskCreatePage />} />
               <Route path="tasks/:recordId/:version" element={<TaskDetailPage />} />
               <Route path="workflows" element={<WorkflowsPage />} />
               <Route path="principles" element={<PrinciplesPage />} />

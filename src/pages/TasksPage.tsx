@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { api } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -48,10 +49,21 @@ export function TasksPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
-      <p className="mt-1 text-sm text-gray-500">
-        All tasks across your assigned domains.
-      </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            All tasks across your assigned domains.
+          </p>
+        </div>
+        <Link
+          to="/tasks/new"
+          className="inline-flex items-center gap-1.5 rounded-md bg-brand-amber px-3 py-2 text-sm font-medium text-white hover:bg-amber-500 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          New task
+        </Link>
+      </div>
 
       <div className="mt-8">
         {isLoading && (
