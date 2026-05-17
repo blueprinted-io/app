@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
@@ -13,6 +13,12 @@ import { ReturnDialog } from "@/components/ReturnDialog";
 
 interface CurrentUser {
   id: string;
+}
+
+interface PrincipleVersionSummary {
+  id: string;
+  version: number;
+  status: string;
 }
 
 interface PrincipleDetail {
@@ -29,6 +35,7 @@ interface PrincipleDetail {
   analogies: string | null;
   domain: string;
   tags: string[];
+  change_note: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -73,8 +80,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export function PrincipleDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [reviseDialogOpen, setReviseDialogOpen] = useState(false);
 
   const { data: principle, isLoading, error } = useQuery({
     queryKey: ["principles", id],
@@ -122,7 +131,23 @@ export function PrincipleDetailPage() {
     onSuccess,
   });
 
-  const actionError = [submitMutation, confirmMutation, returnMutation]
+  const reviseMutation = useMutation({
+    mutationFn: (note?: string) =>
+      api.post<PrincipleDetail>(`/principles/${principle!.id}/revise`, note ? { note } : {}),
+    onSuccess: (newPrinciple) => {
+      setReviseDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["principles"] });
+      navigate(`/principles/${newPrinciple.id}/edit`);
+    },
+  });
+
+  const { data: versions } = useQuery({
+    queryKey: ["principles", id, "versions"],
+    queryFn: () => api.get<PrincipleVersionSummary[]>(`/principles/${principle!.record_id}/versions`),
+    enabled: !!principle,
+  });
+
+  const actionError = [submitMutation, confirmMutation, returnMutation, reviseMutation]
     .map((m) => m.error)
     .find(Boolean);
 
@@ -138,7 +163,8 @@ export function PrincipleDetailPage() {
     submitMutation.isPending ||
     confirmMutation.isPending ||
     returnMutation.isPending ||
-    releaseMutation.isPending;
+    releaseMutation.isPending ||
+    reviseMutation.isPending;
 
   if (isLoading) {
     return (
@@ -184,6 +210,33 @@ export function PrincipleDetailPage() {
         </div>
       </div>
 
+      {/* Version history */}
+      {versions && versions.length > 1 && (
+        <div className="mb-6 flex items-center gap-2 text-sm">
+          <span className="text-gray-400">Versions:</span>
+          {versions.map((v) => {
+            const isCurrent = v.id === principle.id;
+            return isCurrent ? (
+              <span
+                key={v.id}
+                className="rounded px-2 py-0.5 bg-gray-100 font-medium text-gray-700"
+              >
+                v{v.version}
+              </span>
+            ) : (
+              <Link
+                key={v.id}
+                to={`/principles/${v.id}`}
+                className="rounded px-2 py-0.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              >
+                v{v.version}
+                <span className="ml-1 text-xs text-gray-400">({v.status})</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
       {/* Action bar */}
       {principle.status === "draft" && isSelf && (
         <div className="mb-8 flex items-center gap-3">
@@ -227,6 +280,42 @@ export function PrincipleDetailPage() {
           )}
         </div>
       )}
+
+      {principle.change_note && (
+        <div className="mb-4 rounded-md bg-amber-50 border border-amber-200 px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-600 mb-1">
+            {principle.status === "returned" ? "Return note" : "Revision note"}
+          </p>
+          <p className="text-sm text-amber-900">{principle.change_note}</p>
+        </div>
+      )}
+
+      <div className="mb-8 flex items-center gap-3">
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (principle.status === "returned") {
+              reviseMutation.mutate(undefined);
+            } else {
+              setReviseDialogOpen(true);
+            }
+          }}
+          disabled={anyPending}
+        >
+          {reviseMutation.isPending ? "Creating draft…" : "Revise principle"}
+        </Button>
+        <ReturnDialog
+          open={reviseDialogOpen}
+          onOpenChange={setReviseDialogOpen}
+          onConfirm={(note) => reviseMutation.mutate(note)}
+          isPending={reviseMutation.isPending}
+          title="Revise principle"
+          noteLabel="Reason for revision"
+          placeholder="Explain why this principle needs to be revised…"
+          confirmLabel="Create draft"
+          pendingLabel="Creating draft…"
+        />
+      </div>
 
       {actionErrorMessage && (
         <div className="mb-8 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">

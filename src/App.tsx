@@ -15,9 +15,11 @@ import { TaskRedirectPage } from "@/pages/TaskRedirectPage";
 import { WorkflowsPage } from "@/pages/WorkflowsPage";
 import { WorkflowCreatePage } from "@/pages/WorkflowCreatePage";
 import { WorkflowDetailPage } from "@/pages/WorkflowDetailPage";
+import { WorkflowEditPage } from "@/pages/WorkflowEditPage";
 import { PrinciplesPage } from "@/pages/PrinciplesPage";
 import { PrincipleCreatePage } from "@/pages/PrincipleCreatePage";
 import { PrincipleDetailPage } from "@/pages/PrincipleDetailPage";
+import { PrincipleEditPage } from "@/pages/PrincipleEditPage";
 import { ReviewQueuePage } from "@/pages/ReviewQueuePage";
 import { SearchPage } from "@/pages/SearchPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
@@ -59,9 +61,11 @@ export function App() {
               <Route path="tasks/:recordId/:version/edit" element={<TaskEditPage />} />
               <Route path="workflows" element={<WorkflowsPage />} />
               <Route path="workflows/new" element={<WorkflowCreatePage />} />
+              <Route path="workflows/:id/edit" element={<WorkflowEditPage />} />
               <Route path="workflows/:id" element={<WorkflowDetailPage />} />
               <Route path="principles" element={<PrinciplesPage />} />
               <Route path="principles/new" element={<PrincipleCreatePage />} />
+              <Route path="principles/:id/edit" element={<PrincipleEditPage />} />
               <Route path="principles/:id" element={<PrincipleDetailPage />} />
               <Route path="facts/*" element={<ComingSoon label="Facts & Concepts" />} />
               <Route path="review" element={<ReviewQueuePage />} />
