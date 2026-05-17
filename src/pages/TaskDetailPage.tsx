@@ -1,8 +1,9 @@
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -32,6 +33,10 @@ interface TaskStep {
   images: TaskStepImage[];
 }
 
+interface CurrentUser {
+  id: string;
+}
+
 interface TaskDetail {
   id: string;
   record_id: string;
@@ -39,6 +44,7 @@ interface TaskDetail {
   status: string;
   created_at: string;
   updated_at: string;
+  created_by: string;
   title: string;
   outcome: string;
   domain: string;
@@ -153,12 +159,52 @@ function StepCard({ step, index }: { step: TaskStep; index: number }) {
 
 export function TaskDetailPage() {
   const { recordId, version } = useParams<{ recordId: string; version: string }>();
+  const queryClient = useQueryClient();
 
   const { data: task, isLoading, error } = useQuery({
     queryKey: ["tasks", recordId, version],
     queryFn: () => api.get<TaskDetail>(`/tasks/${recordId}/${version}`),
     enabled: !!recordId && !!version,
   });
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["me"],
+    queryFn: () => api.get<CurrentUser>("/users/me"),
+  });
+
+  function onSuccess() {
+    queryClient.invalidateQueries({ queryKey: ["tasks", recordId, version] });
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  }
+
+  const submitMutation = useMutation({
+    mutationFn: () => api.post(`/tasks/${task!.id}/submit`),
+    onSuccess,
+  });
+
+  const confirmMutation = useMutation({
+    mutationFn: () => api.post(`/tasks/${task!.id}/confirm`),
+    onSuccess,
+  });
+
+  const returnMutation = useMutation({
+    mutationFn: () => api.post(`/tasks/${task!.id}/return`),
+    onSuccess,
+  });
+
+  const actionError = [submitMutation, confirmMutation, returnMutation]
+    .map((m) => m.error)
+    .find(Boolean);
+
+  const actionErrorMessage =
+    actionError instanceof ApiError
+      ? actionError.message
+      : actionError
+        ? "An unexpected error occurred."
+        : null;
+
+  const isSelf = !!currentUser && !!task && currentUser.id === task.created_by;
+  const anyPending = submitMutation.isPending || confirmMutation.isPending || returnMutation.isPending;
 
   if (isLoading) {
     return (
@@ -217,6 +263,49 @@ export function TaskDetailPage() {
           <span>Updated {formatDate(task.updated_at)}</span>
         </div>
       </div>
+
+      {/* Action bar */}
+      {task.status === "draft" && isSelf && (
+        <div className="mb-8 flex items-center gap-3">
+          <Button
+            onClick={() => submitMutation.mutate()}
+            disabled={anyPending}
+          >
+            {submitMutation.isPending ? "Submitting…" : "Submit for review"}
+          </Button>
+        </div>
+      )}
+
+      {task.status === "submitted" && (
+        <div className="mb-8 flex items-center gap-3">
+          {!isSelf && (
+            <Button
+              onClick={() => confirmMutation.mutate()}
+              disabled={anyPending}
+            >
+              {confirmMutation.isPending ? "Confirming…" : "Confirm"}
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            onClick={() => returnMutation.mutate()}
+            disabled={anyPending}
+          >
+            {returnMutation.isPending ? "Returning…" : "Return"}
+          </Button>
+          {isSelf && (
+            <p className="text-sm text-gray-400">
+              You cannot confirm your own submission.
+            </p>
+          )}
+        </div>
+      )}
+
+      {actionErrorMessage && (
+        <div className="mb-8 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+          {actionErrorMessage}
+        </div>
+      )}
 
       <div className="space-y-8">
         {/* Outcome */}
