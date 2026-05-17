@@ -11,7 +11,11 @@ import { TasksPage } from "@/pages/TasksPage";
 import { TaskCreatePage } from "@/pages/TaskCreatePage";
 import { TaskDetailPage } from "@/pages/TaskDetailPage";
 import { WorkflowsPage } from "@/pages/WorkflowsPage";
+import { WorkflowCreatePage } from "@/pages/WorkflowCreatePage";
+import { WorkflowDetailPage } from "@/pages/WorkflowDetailPage";
 import { PrinciplesPage } from "@/pages/PrinciplesPage";
+import { PrincipleCreatePage } from "@/pages/PrincipleCreatePage";
+import { PrincipleDetailPage } from "@/pages/PrincipleDetailPage";
 import { SearchPage } from "@/pages/SearchPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
@@ -49,7 +53,11 @@ export function App() {
               <Route path="tasks/new" element={<TaskCreatePage />} />
               <Route path="tasks/:recordId/:version" element={<TaskDetailPage />} />
               <Route path="workflows" element={<WorkflowsPage />} />
+              <Route path="workflows/new" element={<WorkflowCreatePage />} />
+              <Route path="workflows/:id" element={<WorkflowDetailPage />} />
               <Route path="principles" element={<PrinciplesPage />} />
+              <Route path="principles/new" element={<PrincipleCreatePage />} />
+              <Route path="principles/:id" element={<PrincipleDetailPage />} />
               <Route path="facts/*" element={<ComingSoon label="Facts & Concepts" />} />
               <Route path="review/*" element={<ComingSoon label="Review Queue" />} />
               <Route path="ingestion/*" element={<ComingSoon label="Ingestion" />} />
