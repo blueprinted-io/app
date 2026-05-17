@@ -10,6 +10,7 @@ import { ProfilePage } from "@/pages/ProfilePage";
 import { TasksPage } from "@/pages/TasksPage";
 import { TaskCreatePage } from "@/pages/TaskCreatePage";
 import { TaskDetailPage } from "@/pages/TaskDetailPage";
+import { TaskEditPage } from "@/pages/TaskEditPage";
 import { TaskRedirectPage } from "@/pages/TaskRedirectPage";
 import { WorkflowsPage } from "@/pages/WorkflowsPage";
 import { WorkflowCreatePage } from "@/pages/WorkflowCreatePage";
@@ -55,6 +56,7 @@ export function App() {
               <Route path="tasks/new" element={<TaskCreatePage />} />
               <Route path="tasks/id/:taskId" element={<TaskRedirectPage />} />
               <Route path="tasks/:recordId/:version" element={<TaskDetailPage />} />
+              <Route path="tasks/:recordId/:version/edit" element={<TaskEditPage />} />
               <Route path="workflows" element={<WorkflowsPage />} />
               <Route path="workflows/new" element={<WorkflowCreatePage />} />
               <Route path="workflows/:id" element={<WorkflowDetailPage />} />

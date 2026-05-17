@@ -18,9 +18,10 @@ export const userManager = new UserManager({
   scope: "openid profile email blueprinted_roles",
   // PKCE is automatic with response_type=code in oidc-client-ts.
   userStore: new WebStorageStateStore({ store: window.sessionStorage }),
-  // Silent renew keeps the session alive without a full redirect.
-  automaticSilentRenew: true,
-  silent_redirect_uri: `${window.location.origin}/silent-renew`,
+  // Authentik sets X-Frame-Options: deny so iframe-based silent renew is blocked.
+  // Disable it to suppress the console flood; session tokens last long enough
+  // that users just need to re-login when they expire.
+  automaticSilentRenew: false,
 });
 
 export async function signIn(): Promise<void> {

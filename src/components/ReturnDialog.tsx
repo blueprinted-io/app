@@ -16,9 +16,24 @@ interface ReturnDialogProps {
   onOpenChange: (open: boolean) => void;
   onConfirm: (note: string) => void;
   isPending: boolean;
+  title?: string;
+  noteLabel?: string;
+  placeholder?: string;
+  confirmLabel?: string;
+  pendingLabel?: string;
 }
 
-export function ReturnDialog({ open, onOpenChange, onConfirm, isPending }: ReturnDialogProps) {
+export function ReturnDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+  isPending,
+  title = "Return record",
+  noteLabel = "Note for the author",
+  placeholder = "Explain what needs to change before resubmission…",
+  confirmLabel = "Send return",
+  pendingLabel = "Returning…",
+}: ReturnDialogProps) {
   const [note, setNote] = useState("");
 
   function handleConfirm() {
@@ -35,16 +50,16 @@ export function ReturnDialog({ open, onOpenChange, onConfirm, isPending }: Retur
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle>Return record</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-1.5">
-          <Label htmlFor="return-note">Note for the author <span className="text-red-500">*</span></Label>
+          <Label htmlFor="return-note">{noteLabel} <span className="text-red-500">*</span></Label>
           <Textarea
             id="return-note"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Explain what needs to change before resubmission…"
+            placeholder={placeholder}
             rows={4}
             autoFocus
           />
@@ -55,7 +70,7 @@ export function ReturnDialog({ open, onOpenChange, onConfirm, isPending }: Retur
             Cancel
           </DialogClose>
           <Button onClick={handleConfirm} disabled={!note.trim() || isPending}>
-            {isPending ? "Returning…" : "Send return"}
+            {isPending ? pendingLabel : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
