@@ -315,7 +315,9 @@ function LLMSectionCard({
             <>
               <CheckCircle className="h-4 w-4 text-green-500" />
               <span className="text-green-700">
-                Connected — {fetchedModels.length} model{fetchedModels.length !== 1 ? "s" : ""} available
+                {fetchedModels.length > 0
+                  ? `Connected — ${fetchedModels.length} model${fetchedModels.length !== 1 ? "s" : ""} available`
+                  : "Connected — enter model name manually (provider doesn't list models)"}
               </span>
             </>
           ) : (
