@@ -30,6 +30,10 @@ import { SectionSelectionPage } from "@/pages/SectionSelectionPage";
 import { NavSelectionPage } from "@/pages/NavSelectionPage";
 import { CandidateReviewPage } from "@/pages/CandidateReviewPage";
 import { NotificationsPage } from "@/pages/NotificationsPage";
+import { AdminLayout } from "@/pages/admin/AdminLayout";
+import { AdminSettingsPage } from "@/pages/admin/AdminSettingsPage";
+import { AdminDomainsPage } from "@/pages/admin/AdminDomainsPage";
+import { AdminHealthPage } from "@/pages/admin/AdminHealthPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,7 +88,12 @@ export function App() {
               <Route path="ingestion/:id/candidates" element={<CandidateReviewPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="search" element={<SearchPage />} />
-              <Route path="admin/*" element={<ComingSoon label="Admin" />} />
+              <Route path="admin" element={<AdminLayout />}>
+                <Route index element={<AdminSettingsPage />} />
+                <Route path="settings" element={<AdminSettingsPage />} />
+                <Route path="domains" element={<AdminDomainsPage />} />
+                <Route path="health" element={<AdminHealthPage />} />
+              </Route>
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
