@@ -106,14 +106,20 @@ export function AdminSettingsPage() {
 
     setTestResults((prev) => ({ ...prev, [section.baseUrlKey]: "loading" }));
 
-    const apiKey = edits[section.apiKeyKey] ?? "";
-    const result = await api.post<TestResult>("/admin/settings/test-connection", {
-      base_url: baseUrl,
-      api_key: apiKey,
-      api_key_setting: apiKey ? "" : section.apiKeyKey,
-    });
-
-    setTestResults((prev) => ({ ...prev, [section.baseUrlKey]: result }));
+    try {
+      const apiKey = edits[section.apiKeyKey] ?? "";
+      const result = await api.post<TestResult>("/admin/settings/test-connection", {
+        base_url: baseUrl,
+        api_key: apiKey,
+        api_key_setting: apiKey ? "" : section.apiKeyKey,
+      });
+      setTestResults((prev) => ({ ...prev, [section.baseUrlKey]: result }));
+    } catch (err) {
+      setTestResults((prev) => ({
+        ...prev,
+        [section.baseUrlKey]: { ok: false, models: [], error: (err as Error).message },
+      }));
+    }
   }
 
   function handleModelPick(modelKey: string, model: string) {
