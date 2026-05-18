@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Plus, FileText, Globe, Code } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Plus, FileText, Globe, Code, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -50,9 +50,15 @@ function sourceLabel(ing: IngestionSummary): string {
 }
 
 export function IngestionListPage() {
+  const queryClient = useQueryClient();
   const { data, isLoading, error } = useQuery({
     queryKey: ["ingestions"],
     queryFn: () => api.get<IngestionSummary[]>("/ingestions"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/ingestions/${id}`),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["ingestions"] }),
   });
 
   return (
@@ -97,6 +103,7 @@ export function IngestionListPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Chunks</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -126,6 +133,20 @@ export function IngestionListPage() {
                       </TableCell>
                       <TableCell className="text-gray-500">
                         {formatDate(ing.created_at)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <button
+                          onClick={() => {
+                            if (confirm(`Delete "${sourceLabel(ing)}"?`)) {
+                              deleteMutation.mutate(ing.id);
+                            }
+                          }}
+                          disabled={deleteMutation.isPending}
+                          className="rounded p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </TableCell>
                     </TableRow>
                   );
