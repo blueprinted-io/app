@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ReturnDialog } from "@/components/ReturnDialog";
 
 // ---------------------------------------------------------------------------
@@ -304,30 +304,38 @@ export function WorkflowDetailPage() {
       )}
 
       <div className="mb-8 flex items-center gap-3">
-        <Button
-          variant="outline"
-          onClick={() => {
-            if (workflow.status === "returned") {
-              reviseMutation.mutate(undefined);
-            } else {
-              setReviseDialogOpen(true);
-            }
-          }}
-          disabled={anyPending}
-        >
-          {reviseMutation.isPending ? "Creating draft…" : "Revise workflow"}
-        </Button>
-        <ReturnDialog
-          open={reviseDialogOpen}
-          onOpenChange={setReviseDialogOpen}
-          onConfirm={(note) => reviseMutation.mutate(note)}
-          isPending={reviseMutation.isPending}
-          title="Revise workflow"
-          noteLabel="Reason for revision"
-          placeholder="Explain why this workflow needs to be revised…"
-          confirmLabel="Create draft"
-          pendingLabel="Creating draft…"
-        />
+        {workflow.status === "draft" && isSelf ? (
+          <Link to={`/workflows/${workflow.id}/edit`} className={buttonVariants({ variant: "outline" })}>
+            Edit workflow
+          </Link>
+        ) : (
+          <>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (workflow.status === "returned") {
+                  reviseMutation.mutate(undefined);
+                } else {
+                  setReviseDialogOpen(true);
+                }
+              }}
+              disabled={anyPending}
+            >
+              {reviseMutation.isPending ? "Creating draft…" : "Revise workflow"}
+            </Button>
+            <ReturnDialog
+              open={reviseDialogOpen}
+              onOpenChange={setReviseDialogOpen}
+              onConfirm={(note) => reviseMutation.mutate(note)}
+              isPending={reviseMutation.isPending}
+              title="Revise workflow"
+              noteLabel="Reason for revision"
+              placeholder="Explain why this workflow needs to be revised…"
+              confirmLabel="Create draft"
+              pendingLabel="Creating draft…"
+            />
+          </>
+        )}
       </div>
 
       {actionErrorMessage && (

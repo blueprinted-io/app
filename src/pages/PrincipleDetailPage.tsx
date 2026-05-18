@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ReturnDialog } from "@/components/ReturnDialog";
 
 // ---------------------------------------------------------------------------
@@ -291,30 +291,38 @@ export function PrincipleDetailPage() {
       )}
 
       <div className="mb-8 flex items-center gap-3">
-        <Button
-          variant="outline"
-          onClick={() => {
-            if (principle.status === "returned") {
-              reviseMutation.mutate(undefined);
-            } else {
-              setReviseDialogOpen(true);
-            }
-          }}
-          disabled={anyPending}
-        >
-          {reviseMutation.isPending ? "Creating draft…" : "Revise principle"}
-        </Button>
-        <ReturnDialog
-          open={reviseDialogOpen}
-          onOpenChange={setReviseDialogOpen}
-          onConfirm={(note) => reviseMutation.mutate(note)}
-          isPending={reviseMutation.isPending}
-          title="Revise principle"
-          noteLabel="Reason for revision"
-          placeholder="Explain why this principle needs to be revised…"
-          confirmLabel="Create draft"
-          pendingLabel="Creating draft…"
-        />
+        {principle.status === "draft" && isSelf ? (
+          <Link to={`/principles/${principle.id}/edit`} className={buttonVariants({ variant: "outline" })}>
+            Edit principle
+          </Link>
+        ) : (
+          <>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (principle.status === "returned") {
+                  reviseMutation.mutate(undefined);
+                } else {
+                  setReviseDialogOpen(true);
+                }
+              }}
+              disabled={anyPending}
+            >
+              {reviseMutation.isPending ? "Creating draft…" : "Revise principle"}
+            </Button>
+            <ReturnDialog
+              open={reviseDialogOpen}
+              onOpenChange={setReviseDialogOpen}
+              onConfirm={(note) => reviseMutation.mutate(note)}
+              isPending={reviseMutation.isPending}
+              title="Revise principle"
+              noteLabel="Reason for revision"
+              placeholder="Explain why this principle needs to be revised…"
+              confirmLabel="Create draft"
+              pendingLabel="Creating draft…"
+            />
+          </>
+        )}
       </div>
 
       {actionErrorMessage && (
