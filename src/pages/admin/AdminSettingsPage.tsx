@@ -252,15 +252,22 @@ function LLMSectionCard({
       </p>
 
       {/* Base URL row */}
-      <div className="grid grid-cols-3 items-center gap-4 border-t border-gray-100 py-2">
-        <label className="text-sm font-medium text-gray-700">Base URL</label>
-        <input
-          type="text"
-          className="col-span-2 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
-          value={baseUrl}
-          onChange={(e) => setEdit(section.baseUrlKey, e.target.value)}
-          autoComplete="off"
-        />
+      <div className="grid grid-cols-3 items-start gap-4 border-t border-gray-100 py-2">
+        <label className="pt-1.5 text-sm font-medium text-gray-700">Base URL</label>
+        <div className="col-span-2">
+          <input
+            type="text"
+            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
+            value={baseUrl}
+            onChange={(e) => setEdit(section.baseUrlKey, e.target.value)}
+            autoComplete="off"
+            placeholder="https://api.openai.com/v1"
+          />
+          <p className="mt-1 text-xs text-gray-400">
+            OpenAI-compatible endpoint — works with OpenAI, Groq, Together, Ollama, LM Studio, and
+            others.
+          </p>
+        </div>
       </div>
 
       {/* API Key row with Test Connection button */}
