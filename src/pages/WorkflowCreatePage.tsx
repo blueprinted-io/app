@@ -98,9 +98,9 @@ export function WorkflowCreatePage() {
       }
       return workflow;
     },
-    onSuccess: (workflow) => {
+    onSuccess: (workflow, { submitAfter }) => {
       queryClient.invalidateQueries({ queryKey: ["workflows"] });
-      navigate(`/workflows/${workflow.id}`);
+      navigate(submitAfter ? `/workflows/${workflow.id}` : `/workflows/${workflow.id}/edit`);
     },
   });
 
