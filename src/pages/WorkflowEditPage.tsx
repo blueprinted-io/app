@@ -1,12 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, X, Plus } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RefPickerDialog } from "@/components/RefPickerDialog";
+
+interface WorkflowTaskRef {
+  task_record_id: string;
+  order_index: number;
+}
+
+interface WorkflowPrincipleRef {
+  principle_record_id: string;
+}
 
 interface WorkflowDetail {
   id: string;
@@ -17,6 +27,20 @@ interface WorkflowDetail {
   objective: string;
   domain: string;
   tags: string[];
+  task_refs: WorkflowTaskRef[];
+  principle_refs: WorkflowPrincipleRef[];
+}
+
+interface TaskSummary {
+  record_id: string;
+  title: string;
+  status: string;
+}
+
+interface PrincipleSummary {
+  record_id: string;
+  title: string;
+  status: string;
 }
 
 function TagInput({
@@ -79,10 +103,26 @@ export function WorkflowEditPage() {
     enabled: !!id,
   });
 
+  const isDraft = workflow?.status === "draft";
+
+  const { data: allTasks } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: () => api.get<TaskSummary[]>("/tasks"),
+    enabled: isDraft,
+  });
+
+  const { data: allPrinciples } = useQuery({
+    queryKey: ["principles"],
+    queryFn: () => api.get<PrincipleSummary[]>("/principles"),
+    enabled: isDraft,
+  });
+
   const [title, setTitle] = useState("");
   const [objective, setObjective] = useState("");
   const [domain, setDomain] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [taskPickerOpen, setTaskPickerOpen] = useState(false);
+  const [principlePickerOpen, setPrinciplePickerOpen] = useState(false);
 
   useEffect(() => {
     if (workflow) {
@@ -109,7 +149,55 @@ export function WorkflowEditPage() {
     },
   });
 
+  function invalidateWorkflow() {
+    queryClient.invalidateQueries({ queryKey: ["workflows", id] });
+  }
+
+  const addTaskRefMutation = useMutation({
+    mutationFn: (taskRecordId: string) =>
+      api.post(`/workflows/${workflow!.id}/task-refs`, { task_record_id: taskRecordId }),
+    onSuccess: invalidateWorkflow,
+  });
+
+  const removeTaskRefMutation = useMutation({
+    mutationFn: (taskRecordId: string) =>
+      api.delete(`/workflows/${workflow!.id}/task-refs/${taskRecordId}`),
+    onSuccess: invalidateWorkflow,
+  });
+
+  const addPrincipleRefMutation = useMutation({
+    mutationFn: (principleRecordId: string) =>
+      api.post(`/workflows/${workflow!.id}/principle-refs`, { principle_record_id: principleRecordId }),
+    onSuccess: invalidateWorkflow,
+  });
+
+  const removePrincipleRefMutation = useMutation({
+    mutationFn: (principleRecordId: string) =>
+      api.delete(`/workflows/${workflow!.id}/principle-refs/${principleRecordId}`),
+    onSuccess: invalidateWorkflow,
+  });
+
   const canSave = title.trim() && objective.trim() && domain.trim();
+
+  const currentTaskRecordIds = new Set(workflow?.task_refs.map((r) => r.task_record_id) ?? []);
+  const currentPrincipleRecordIds = new Set(workflow?.principle_refs.map((r) => r.principle_record_id) ?? []);
+
+  const availableTasks = (allTasks ?? [])
+    .filter((t) => t.status === "confirmed" && !currentTaskRecordIds.has(t.record_id))
+    .map((t) => ({ id: t.record_id, title: t.title }));
+
+  const availablePrinciples = (allPrinciples ?? [])
+    .filter((p) => p.status === "confirmed" && !currentPrincipleRecordIds.has(p.record_id))
+    .map((p) => ({ id: p.record_id, title: p.title }));
+
+  const taskTitleMap = new Map((allTasks ?? []).map((t) => [t.record_id, t.title]));
+  const principleTitleMap = new Map((allPrinciples ?? []).map((p) => [p.record_id, p.title]));
+
+  const anyRefPending =
+    addTaskRefMutation.isPending ||
+    removeTaskRefMutation.isPending ||
+    addPrincipleRefMutation.isPending ||
+    removePrincipleRefMutation.isPending;
 
   if (isLoading) {
     return (
@@ -137,6 +225,10 @@ export function WorkflowEditPage() {
       ? "An unexpected error occurred."
       : null;
 
+  const sortedTaskRefs = (workflow.task_refs ?? [])
+    .slice()
+    .sort((a, b) => a.order_index - b.order_index);
+
   return (
     <div className="p-8 max-w-2xl">
       <Link
@@ -148,7 +240,7 @@ export function WorkflowEditPage() {
       </Link>
 
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Edit workflow</h1>
-      <p className="text-sm text-gray-400 mb-8">v{workflow.version} · {workflow.status} — task and principle refs are managed on the workflow detail page</p>
+      <p className="text-sm text-gray-400 mb-8">v{workflow.version} · {workflow.status}</p>
 
       <form
         onSubmit={(e) => { e.preventDefault(); if (canSave) saveMutation.mutate(); }}
@@ -170,6 +262,113 @@ export function WorkflowEditPage() {
         </div>
 
         <TagInput label="Tags" values={tags} onChange={setTags} placeholder="Tag — press Enter" />
+
+        {/* Task refs */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>Tasks</Label>
+            {isDraft && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setTaskPickerOpen(true)}
+                disabled={anyRefPending || availableTasks.length === 0}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                Add task
+              </Button>
+            )}
+          </div>
+
+          {sortedTaskRefs.length === 0 ? (
+            <p className="text-sm text-gray-400">No tasks attached.</p>
+          ) : (
+            <ol className="space-y-1">
+              {sortedTaskRefs.map((ref) => (
+                <li key={ref.task_record_id} className="flex items-center gap-2 rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
+                  <span className="shrink-0 text-xs text-gray-400 w-4">{ref.order_index + 1}.</span>
+                  <span className="flex-1 text-sm text-gray-800 truncate">
+                    {taskTitleMap.get(ref.task_record_id) ?? (
+                      <span className="font-mono text-xs text-gray-500">{ref.task_record_id}</span>
+                    )}
+                  </span>
+                  {isDraft && (
+                    <button
+                      type="button"
+                      onClick={() => removeTaskRefMutation.mutate(ref.task_record_id)}
+                      disabled={anyRefPending}
+                      className="shrink-0 text-gray-400 hover:text-red-500 disabled:opacity-40"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ol>
+          )}
+
+          <RefPickerDialog
+            open={taskPickerOpen}
+            onOpenChange={setTaskPickerOpen}
+            title="Add task"
+            items={availableTasks}
+            onPick={(id) => addTaskRefMutation.mutate(id)}
+          />
+        </div>
+
+        {/* Principle refs */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>Principles</Label>
+            {isDraft && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPrinciplePickerOpen(true)}
+                disabled={anyRefPending || availablePrinciples.length === 0}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                Add principle
+              </Button>
+            )}
+          </div>
+
+          {(workflow.principle_refs ?? []).length === 0 ? (
+            <p className="text-sm text-gray-400">No principles attached.</p>
+          ) : (
+            <ul className="space-y-1">
+              {(workflow.principle_refs ?? []).map((ref) => (
+                <li key={ref.principle_record_id} className="flex items-center gap-2 rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
+                  <span className="flex-1 text-sm text-gray-800 truncate">
+                    {principleTitleMap.get(ref.principle_record_id) ?? (
+                      <span className="font-mono text-xs text-gray-500">{ref.principle_record_id}</span>
+                    )}
+                  </span>
+                  {isDraft && (
+                    <button
+                      type="button"
+                      onClick={() => removePrincipleRefMutation.mutate(ref.principle_record_id)}
+                      disabled={anyRefPending}
+                      className="shrink-0 text-gray-400 hover:text-red-500 disabled:opacity-40"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <RefPickerDialog
+            open={principlePickerOpen}
+            onOpenChange={setPrinciplePickerOpen}
+            title="Add principle"
+            items={availablePrinciples}
+            onPick={(id) => addPrincipleRefMutation.mutate(id)}
+          />
+        </div>
 
         {saveError && (
           <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
