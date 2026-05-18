@@ -64,6 +64,39 @@ const OTHER_KEYS: { key: string; label: string; encrypted?: boolean }[] = [
   { key: "ingestion_html_respect_robots_txt", label: "Respect robots.txt (true/false)" },
 ];
 
+function InputRow({
+  label,
+  value,
+  isSet,
+  encrypted,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  isSet: boolean;
+  encrypted?: boolean;
+  onChange: (v: string) => void;
+}) {
+  const placeholder = encrypted
+    ? isSet
+      ? "••••••••  (set — enter new value to update)"
+      : "Enter API key"
+    : "";
+  return (
+    <div className="grid grid-cols-3 items-center gap-4 py-2">
+      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <input
+        type={encrypted ? "password" : "text"}
+        className="col-span-2 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        autoComplete="off"
+      />
+    </div>
+  );
+}
+
 export function AdminSettingsPage() {
   const queryClient = useQueryClient();
   const [edits, setEdits] = useState<Record<string, string>>({});
@@ -145,36 +178,6 @@ export function AdminSettingsPage() {
     if (Object.keys(patch).length > 0) saveMutation.mutate(patch);
   }
 
-  function InputRow({
-    k,
-    label,
-    encrypted,
-  }: {
-    k: string;
-    label: string;
-    encrypted?: boolean;
-  }) {
-    const existing = settingMap[k];
-    const placeholder = encrypted
-      ? existing?.value !== null
-        ? "••••••••  (set — enter new value to update)"
-        : "Enter API key"
-      : "";
-    return (
-      <div className="grid grid-cols-3 items-center gap-4 py-2">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
-        <input
-          type={encrypted ? "password" : "text"}
-          className="col-span-2 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
-          placeholder={placeholder}
-          value={currentVal(k)}
-          onChange={(e) => setEdit(k, e.target.value)}
-          autoComplete="off"
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-2xl space-y-8">
       <div>
@@ -202,8 +205,15 @@ export function AdminSettingsPage() {
       <div>
         <h2 className="mb-1 text-lg font-semibold text-gray-900">Other Settings</h2>
         <div className="divide-y divide-gray-100 rounded border border-gray-200 bg-white px-4">
-          {OTHER_KEYS.map(({ key, label }) => (
-            <InputRow key={key} k={key} label={label} />
+          {OTHER_KEYS.map(({ key, label, encrypted }) => (
+            <InputRow
+              key={key}
+              label={label}
+              encrypted={encrypted}
+              value={currentVal(key)}
+              isSet={settingMap[key] !== undefined}
+              onChange={(v) => setEdit(key, v)}
+            />
           ))}
         </div>
       </div>
@@ -344,7 +354,7 @@ function LLMSectionCard({
           {testOk && fetchedModels.length > 0 && (
             <select
               className="shrink-0 rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
-              value=""
+              value={currentVal(section.modelKey)}
               onChange={(e) => {
                 if (e.target.value) onModelPick(e.target.value);
               }}
