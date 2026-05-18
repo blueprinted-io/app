@@ -10,10 +10,13 @@ import {
   Settings,
   LogOut,
   User,
+  Bell,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/lib/auth";
+import { api } from "@/lib/api";
 
 interface NavItem {
   to: string;
@@ -54,6 +57,40 @@ function NavItemLink({ item }: { item: NavItem }) {
   );
 }
 
+function NotificationBell() {
+  const { data } = useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: () => api.get<{ id: string; read_at: string | null }[]>("/notifications?unread_only=true&limit=99"),
+    refetchInterval: 30_000,
+  });
+
+  const count = data?.length ?? 0;
+
+  return (
+    <NavLink
+      to="/notifications"
+      className={({ isActive }) =>
+        cn(
+          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+          isActive
+            ? "bg-brand-amber text-brand-black"
+            : "text-gray-400 hover:bg-white/10 hover:text-white"
+        )
+      }
+    >
+      <span className="relative">
+        <Bell className="h-4 w-4 shrink-0" />
+        {count > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-amber text-[10px] font-bold text-brand-black">
+            {count > 9 ? "9+" : count}
+          </span>
+        )}
+      </span>
+      Notifications
+    </NavLink>
+  );
+}
+
 export function Layout() {
   const { user } = useAuth();
   const roles: string[] = (user?.profile["groups"] as string[]) ?? [];
@@ -78,6 +115,7 @@ export function Layout() {
           {visibleItems.map((item) => (
             <NavItemLink key={item.to} item={item} />
           ))}
+          <NotificationBell />
         </nav>
 
         {/* User footer */}

@@ -23,6 +23,13 @@ import { PrincipleEditPage } from "@/pages/PrincipleEditPage";
 import { ReviewQueuePage } from "@/pages/ReviewQueuePage";
 import { SearchPage } from "@/pages/SearchPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+import { IngestionListPage } from "@/pages/IngestionListPage";
+import { IngestionCreatePage } from "@/pages/IngestionCreatePage";
+import { IngestionDetailPage } from "@/pages/IngestionDetailPage";
+import { SectionSelectionPage } from "@/pages/SectionSelectionPage";
+import { NavSelectionPage } from "@/pages/NavSelectionPage";
+import { CandidateReviewPage } from "@/pages/CandidateReviewPage";
+import { NotificationsPage } from "@/pages/NotificationsPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -69,7 +76,13 @@ export function App() {
               <Route path="principles/:id" element={<PrincipleDetailPage />} />
               <Route path="facts/*" element={<ComingSoon label="Facts & Concepts" />} />
               <Route path="review" element={<ReviewQueuePage />} />
-              <Route path="ingestion/*" element={<ComingSoon label="Ingestion" />} />
+              <Route path="ingestion" element={<IngestionListPage />} />
+              <Route path="ingestion/new" element={<IngestionCreatePage />} />
+              <Route path="ingestion/:id" element={<IngestionDetailPage />} />
+              <Route path="ingestion/:id/sections" element={<SectionSelectionPage />} />
+              <Route path="ingestion/:id/nav-select" element={<NavSelectionPage />} />
+              <Route path="ingestion/:id/candidates" element={<CandidateReviewPage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
               <Route path="search" element={<SearchPage />} />
               <Route path="admin/*" element={<ComingSoon label="Admin" />} />
               <Route path="*" element={<NotFoundPage />} />
