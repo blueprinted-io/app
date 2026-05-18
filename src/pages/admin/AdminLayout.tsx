@@ -3,6 +3,7 @@ import { NavLink, Outlet } from "react-router-dom";
 const NAV_ITEMS = [
   { to: "/admin/settings", label: "Settings" },
   { to: "/admin/domains", label: "Domains" },
+  { to: "/admin/users", label: "Users" },
   { to: "/admin/health", label: "Health" },
 ];
 

@@ -33,6 +33,7 @@ import { NotificationsPage } from "@/pages/NotificationsPage";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
 import { AdminSettingsPage } from "@/pages/admin/AdminSettingsPage";
 import { AdminDomainsPage } from "@/pages/admin/AdminDomainsPage";
+import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
 import { AdminHealthPage } from "@/pages/admin/AdminHealthPage";
 
 const queryClient = new QueryClient({
@@ -92,6 +93,7 @@ export function App() {
                 <Route index element={<AdminSettingsPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="domains" element={<AdminDomainsPage />} />
+                <Route path="users" element={<AdminUsersPage />} />
                 <Route path="health" element={<AdminHealthPage />} />
               </Route>
               <Route path="*" element={<NotFoundPage />} />
