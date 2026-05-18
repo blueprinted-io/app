@@ -1,16 +1,29 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, X } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, X, Plus } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RefPickerDialog } from "@/components/RefPickerDialog";
 
 interface WorkflowResponse {
   id: string;
+}
+
+interface TaskSummary {
+  record_id: string;
+  title: string;
+  status: string;
+}
+
+interface PrincipleSummary {
+  record_id: string;
+  title: string;
+  status: string;
 }
 
 function TagInput({
@@ -84,6 +97,34 @@ export function WorkflowCreatePage() {
   const [objective, setObjective] = useState("");
   const [domain, setDomain] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [taskRecordIds, setTaskRecordIds] = useState<string[]>([]);
+  const [principleRecordIds, setPrincipleRecordIds] = useState<string[]>([]);
+  const [taskPickerOpen, setTaskPickerOpen] = useState(false);
+  const [principlePickerOpen, setPrinciplePickerOpen] = useState(false);
+
+  const { data: allTasks } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: () => api.get<TaskSummary[]>("/tasks"),
+  });
+
+  const { data: allPrinciples } = useQuery({
+    queryKey: ["principles"],
+    queryFn: () => api.get<PrincipleSummary[]>("/principles"),
+  });
+
+  const confirmedTasks = (allTasks ?? []).filter((t) => t.status === "confirmed");
+  const confirmedPrinciples = (allPrinciples ?? []).filter((p) => p.status === "confirmed");
+
+  const taskTitleMap = new Map(confirmedTasks.map((t) => [t.record_id, t.title]));
+  const principleTitleMap = new Map(confirmedPrinciples.map((p) => [p.record_id, p.title]));
+
+  const availableTasks = confirmedTasks
+    .filter((t) => !taskRecordIds.includes(t.record_id))
+    .map((t) => ({ id: t.record_id, title: t.title }));
+
+  const availablePrinciples = confirmedPrinciples
+    .filter((p) => !principleRecordIds.includes(p.record_id))
+    .map((p) => ({ id: p.record_id, title: p.title }));
 
   const mutation = useMutation({
     mutationFn: async ({ submitAfter }: { submitAfter: boolean }) => {
@@ -93,6 +134,14 @@ export function WorkflowCreatePage() {
         domain,
         tags,
       });
+      await Promise.all([
+        ...taskRecordIds.map((id) =>
+          api.post(`/workflows/${workflow.id}/task-refs`, { task_record_id: id })
+        ),
+        ...principleRecordIds.map((id) =>
+          api.post(`/workflows/${workflow.id}/principle-refs`, { principle_record_id: id })
+        ),
+      ]);
       if (submitAfter) {
         await api.post(`/workflows/${workflow.id}/submit`);
       }
@@ -186,6 +235,101 @@ export function WorkflowCreatePage() {
               placeholder="e.g. security, networking"
             />
           </CardContent>
+        </Card>
+
+        {/* Task refs */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-base">Tasks</CardTitle>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setTaskPickerOpen(true)}
+              disabled={isPending || availableTasks.length === 0}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add task
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {taskRecordIds.length === 0 ? (
+              <p className="text-sm text-gray-400">No tasks attached.</p>
+            ) : (
+              <ol className="space-y-1">
+                {taskRecordIds.map((id, i) => (
+                  <li key={id} className="flex items-center gap-2 rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
+                    <span className="shrink-0 text-xs text-gray-400 w-4">{i + 1}.</span>
+                    <span className="flex-1 text-sm text-gray-800 truncate">
+                      {taskTitleMap.get(id) ?? <span className="font-mono text-xs text-gray-500">{id}</span>}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setTaskRecordIds((prev) => prev.filter((x) => x !== id))}
+                      disabled={isPending}
+                      className="shrink-0 text-gray-400 hover:text-red-500 disabled:opacity-40"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </CardContent>
+          <RefPickerDialog
+            open={taskPickerOpen}
+            onOpenChange={setTaskPickerOpen}
+            title="Add task"
+            items={availableTasks}
+            onPick={(id) => setTaskRecordIds((prev) => [...prev, id])}
+          />
+        </Card>
+
+        {/* Principle refs */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-base">Principles</CardTitle>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setPrinciplePickerOpen(true)}
+              disabled={isPending || availablePrinciples.length === 0}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add principle
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {principleRecordIds.length === 0 ? (
+              <p className="text-sm text-gray-400">No principles attached.</p>
+            ) : (
+              <ul className="space-y-1">
+                {principleRecordIds.map((id) => (
+                  <li key={id} className="flex items-center gap-2 rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
+                    <span className="flex-1 text-sm text-gray-800 truncate">
+                      {principleTitleMap.get(id) ?? <span className="font-mono text-xs text-gray-500">{id}</span>}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPrincipleRecordIds((prev) => prev.filter((x) => x !== id))}
+                      disabled={isPending}
+                      className="shrink-0 text-gray-400 hover:text-red-500 disabled:opacity-40"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+          <RefPickerDialog
+            open={principlePickerOpen}
+            onOpenChange={setPrinciplePickerOpen}
+            title="Add principle"
+            items={availablePrinciples}
+            onPick={(id) => setPrincipleRecordIds((prev) => [...prev, id])}
+          />
         </Card>
 
         {errorMessage && (
