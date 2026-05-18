@@ -251,15 +251,32 @@ function LLMSectionCard({
         {section.desc && <span className="ml-2 font-normal normal-case text-gray-400">{section.desc}</span>}
       </p>
 
-      {/* Base URL row with Test button */}
+      {/* Base URL row */}
       <div className="grid grid-cols-3 items-center gap-4 border-t border-gray-100 py-2">
         <label className="text-sm font-medium text-gray-700">Base URL</label>
+        <input
+          type="text"
+          className="col-span-2 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
+          value={baseUrl}
+          onChange={(e) => setEdit(section.baseUrlKey, e.target.value)}
+          autoComplete="off"
+        />
+      </div>
+
+      {/* API Key row with Test Connection button */}
+      <div className="grid grid-cols-3 items-center gap-4 border-t border-gray-100 py-2">
+        <label className="text-sm font-medium text-gray-700">API Key</label>
         <div className="col-span-2 flex items-center gap-2">
           <input
-            type="text"
+            type="password"
             className="min-w-0 flex-1 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
-            value={baseUrl}
-            onChange={(e) => setEdit(section.baseUrlKey, e.target.value)}
+            placeholder={
+              settingMap[section.apiKeyKey]
+                ? "••••••••  (set — enter new value to update)"
+                : "Enter API key"
+            }
+            value={currentVal(section.apiKeyKey)}
+            onChange={(e) => setEdit(section.apiKeyKey, e.target.value)}
             autoComplete="off"
           />
           <Button
@@ -272,7 +289,7 @@ function LLMSectionCard({
             {testResult === "loading" ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              "Test"
+              "Test connection"
             )}
           </Button>
         </div>
@@ -297,7 +314,7 @@ function LLMSectionCard({
         </div>
       )}
 
-      {/* Model row — plain input or combined input + picker dropdown when models fetched */}
+      {/* Model row — plain input, with picker dropdown alongside once models are fetched */}
       <div className="grid grid-cols-3 items-center gap-4 border-t border-gray-100 py-2">
         <label className="text-sm font-medium text-gray-700">Model</label>
         <div className="col-span-2 flex items-center gap-2">
@@ -317,7 +334,7 @@ function LLMSectionCard({
                 if (e.target.value) onModelPick(e.target.value);
               }}
             >
-              <option value="">Fetch models</option>
+              <option value="">Pick model</option>
               {fetchedModels.map((m) => (
                 <option key={m} value={m}>
                   {m}
@@ -326,23 +343,6 @@ function LLMSectionCard({
             </select>
           )}
         </div>
-      </div>
-
-      {/* API Key row */}
-      <div className="grid grid-cols-3 items-center gap-4 border-t border-gray-100 py-2">
-        <label className="text-sm font-medium text-gray-700">API Key</label>
-        <input
-          type="password"
-          className="col-span-2 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
-          placeholder={
-            settingMap[section.apiKeyKey]
-              ? "••••••••  (set — enter new value to update)"
-              : "Enter API key"
-          }
-          value={currentVal(section.apiKeyKey)}
-          onChange={(e) => setEdit(section.apiKeyKey, e.target.value)}
-          autoComplete="off"
-        />
       </div>
 
       {/* Timeout row (optional) */}
