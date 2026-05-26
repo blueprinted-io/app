@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/StatusBadge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ReturnDialog } from "@/components/ReturnDialog";
 
@@ -55,14 +56,6 @@ interface WorkflowDetail {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  draft: "outline",
-  submitted: "secondary",
-  confirmed: "default",
-  returned: "destructive",
-  deprecated: "outline",
-  retired: "outline",
-};
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -211,7 +204,7 @@ export function WorkflowDetailPage() {
 
       <div className="mb-8">
         <div className="flex flex-wrap items-center gap-2 mb-2">
-          <Badge variant={STATUS_VARIANT[workflow.status] ?? "outline"}>{workflow.status}</Badge>
+          <StatusBadge status={workflow.status} />
           <span className="text-sm text-gray-400">v{workflow.version}</span>
         </div>
 

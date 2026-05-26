@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/StatusBadge";
 
 interface SearchResult {
   id: string;
@@ -29,14 +30,6 @@ const TYPE_LABEL: Record<string, string> = {
   principle: "Principle",
 };
 
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  draft: "outline",
-  submitted: "secondary",
-  confirmed: "default",
-  returned: "destructive",
-  deprecated: "outline",
-  retired: "outline",
-};
 
 type TypeFilter = "all" | "task" | "workflow" | "principle";
 
@@ -155,9 +148,7 @@ export function SearchPage() {
                   <Badge variant="outline">
                     {TYPE_LABEL[result.record_type] ?? result.record_type}
                   </Badge>
-                  <Badge variant={STATUS_VARIANT[result.status] ?? "outline"}>
-                    {result.status}
-                  </Badge>
+                  <StatusBadge status={result.status} />
                   {result.domain && (
                     <span className="text-xs text-gray-400">{result.domain}</span>
                   )}

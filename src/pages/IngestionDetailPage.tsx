@@ -2,7 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { api } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/StatusBadge";
 import { buttonVariants } from "@/components/ui/button";
 
 interface IngestionChunk {
@@ -28,12 +28,6 @@ interface IngestionStatus {
   chunks: IngestionChunk[];
 }
 
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  pending: "outline",
-  chunking: "secondary",
-  ready: "default",
-  failed: "destructive",
-};
 
 function sourceLabel(ing: IngestionStatus): string {
   if (ing.source_type === "pdf") return ing.original_filename ?? "PDF";
@@ -109,9 +103,7 @@ export function IngestionDetailPage() {
 
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
-          <Badge variant={STATUS_VARIANT[ingestion.status] ?? "outline"}>
-            {ingestion.status}
-          </Badge>
+          <StatusBadge status={ingestion.status} />
           <span className="text-xs text-gray-400 uppercase font-medium">{ingestion.source_type}</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900 break-all">{sourceLabel(ingestion)}</h1>

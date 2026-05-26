@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, FileText, Globe, Code, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/StatusBadge";
 import {
   Table,
   TableBody,
@@ -22,12 +22,6 @@ interface IngestionSummary {
   created_at: string;
 }
 
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  pending: "outline",
-  chunking: "secondary",
-  ready: "default",
-  failed: "destructive",
-};
 
 const SOURCE_ICON: Record<string, React.ElementType> = {
   pdf: FileText,
@@ -124,9 +118,7 @@ export function IngestionListPage() {
                         {ing.source_type}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={STATUS_VARIANT[ing.status] ?? "outline"}>
-                          {ing.status}
-                        </Badge>
+                        <StatusBadge status={ing.status} />
                       </TableCell>
                       <TableCell className="text-gray-500">
                         {ing.chunk_count ?? "—"}

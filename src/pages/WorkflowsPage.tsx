@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { api } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/StatusBadge";
 import {
   Table,
   TableBody,
@@ -22,14 +22,6 @@ interface WorkflowSummary {
   updated_at: string;
 }
 
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  draft: "outline",
-  submitted: "secondary",
-  confirmed: "default",
-  returned: "destructive",
-  deprecated: "outline",
-  retired: "outline",
-};
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -104,9 +96,7 @@ export function WorkflowsPage() {
                     </TableCell>
                     <TableCell className="text-gray-500">{workflow.domain}</TableCell>
                     <TableCell>
-                      <Badge variant={STATUS_VARIANT[workflow.status] ?? "outline"}>
-                        {workflow.status}
-                      </Badge>
+                      <StatusBadge status={workflow.status} />
                     </TableCell>
                     <TableCell className="text-gray-500">
                       {formatDate(workflow.updated_at)}

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { StatusBadge } from "@/components/StatusBadge";
 import { ReturnDialog } from "@/components/ReturnDialog";
 
 // ---------------------------------------------------------------------------
@@ -71,14 +71,6 @@ interface TaskDetail {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  draft: "outline",
-  submitted: "secondary",
-  confirmed: "default",
-  returned: "destructive",
-  deprecated: "outline",
-  retired: "outline",
-};
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -94,67 +86,67 @@ function formatDate(iso: string): string {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section>
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
-        {title}
-      </h2>
+    <section className="bp-card" style={{ padding: 18 }}>
+      <div className="bp-section-head">
+        <h3>{title}</h3>
+      </div>
       {children}
     </section>
   );
 }
 
+const stepNumStyle: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  width: 26, height: 26, borderRadius: 999,
+  background: "color-mix(in oklab, var(--bp-accent) 15%, var(--bp-bg))",
+  color: "var(--bp-accent-deep)", fontWeight: 800, fontSize: 12, flexShrink: 0,
+};
+
+const subLabelStyle: React.CSSProperties = {
+  fontSize: 10, fontWeight: 800, letterSpacing: ".06em",
+  textTransform: "uppercase", color: "var(--bp-muted)", marginBottom: 6,
+};
+
 function StepCard({ step, index }: { step: TaskStep; index: number }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5">
-      <div className="flex items-start gap-4">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-600">
-          {index + 1}
-        </span>
-        <div className="min-w-0 flex-1 space-y-4">
-          {/* Step intent */}
-          <div className="flex items-start justify-between gap-3">
-            <p className="font-medium text-gray-900">{step.step}</p>
+    <div className="bp-card" style={{ padding: "14px 16px" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+        <span style={stepNumStyle}>{index + 1}</span>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+            <p style={{ fontWeight: 600, fontSize: 14, color: "var(--bp-ink)", margin: 0 }}>{step.step}</p>
             {step.irreversible && (
-              <span className="flex shrink-0 items-center gap-1 text-xs text-amber-600">
-                <AlertTriangle className="h-3.5 w-3.5" />
+              <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--bp-warn)", flexShrink: 0 }}>
+                <AlertTriangle size={12} />
                 Irreversible
               </span>
             )}
           </div>
 
-          {/* Actions */}
           {step.actions.length > 0 && (
             <div>
-              <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">
-                How
-              </p>
-              <ol className="space-y-1">
+              <p style={subLabelStyle}>How</p>
+              <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 4 }}>
                 {step.actions.map((a) => (
-                  <li key={a.id} className="flex gap-2 text-sm text-gray-700">
-                    <span className="shrink-0 text-gray-400">{a.order_index + 1}.</span>
-                    <span className="font-mono">{a.instruction}</span>
+                  <li key={a.id} style={{ display: "flex", gap: 8, fontSize: 13, color: "var(--bp-ink)" }}>
+                    <span style={{ color: "var(--bp-muted)", flexShrink: 0 }}>{a.order_index + 1}.</span>
+                    <code style={{ fontFamily: "ui-monospace, monospace", background: "none", border: "none", padding: 0, fontSize: 13 }}>{a.instruction}</code>
                   </li>
                 ))}
               </ol>
             </div>
           )}
 
-          {/* Notes */}
           {step.notes && (
-            <div className="rounded-md bg-blue-50 px-3 py-2.5">
-              <p className="text-xs font-medium uppercase tracking-wide text-blue-500 mb-1">
-                Note
-              </p>
-              <p className="text-sm text-blue-800">{step.notes}</p>
+            <div style={{ background: "color-mix(in oklab, var(--bp-accent-blue) 8%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-accent-blue) 20%, var(--bp-border))", borderRadius: 8, padding: "8px 12px" }}>
+              <p style={{ ...subLabelStyle, color: "var(--bp-accent-blue)" }}>Note</p>
+              <p style={{ fontSize: 13, margin: 0, color: "var(--bp-ink)" }}>{step.notes}</p>
             </div>
           )}
 
-          {/* Completion criterion */}
-          <div className="rounded-md bg-green-50 px-3 py-2.5">
-            <p className="text-xs font-medium uppercase tracking-wide text-green-600 mb-1">
-              Done when
-            </p>
-            <p className="text-sm text-green-900">{step.completion}</p>
+          <div style={{ background: "color-mix(in oklab, var(--bp-ok) 8%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-ok) 22%, var(--bp-border))", borderRadius: 8, padding: "8px 12px" }}>
+            <p style={{ ...subLabelStyle, color: "var(--bp-ok)" }}>Done when</p>
+            <p style={{ fontSize: 13, margin: 0, color: "var(--bp-ink)" }}>{step.completion}</p>
           </div>
         </div>
       </div>
@@ -256,271 +248,216 @@ export function TaskDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8 flex items-center gap-2 text-sm text-gray-500">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-amber border-t-transparent" />
-        Loading task…
+      <div className="bp-page">
+        <p className="bp-muted" style={{ fontSize: 13 }}>Loading task…</p>
       </div>
     );
   }
 
   if (error || !task) {
     return (
-      <div className="p-8">
-        <p className="text-sm text-red-600">Task not found or failed to load.</p>
-        <Link to="/tasks" className="mt-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
-          <ArrowLeft className="h-4 w-4" /> Back to tasks
+      <div className="bp-page">
+        <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>Task not found or failed to load.</p>
+        <Link to="/tasks" className="bp-link" style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={14} /> Back to tasks
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="p-8 max-w-3xl">
-      {/* Back link */}
-      <Link
-        to="/tasks"
-        className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-6"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Tasks
-      </Link>
+    <div className="bp-page" style={{ maxWidth: 820 }}>
 
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-wrap items-center gap-2 mb-2">
-          <Badge variant={STATUS_VARIANT[task.status] ?? "outline"}>{task.status}</Badge>
-          <span className="text-sm text-gray-400">v{task.version}</span>
-          {task.irreversible && (
-            <span className="flex items-center gap-1 text-xs text-amber-600">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Contains irreversible steps
-            </span>
-          )}
+      {/* Breadcrumb */}
+      <div className="bp-crumbs">
+        <Link to="/tasks" className="bp-link" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={12} /> Tasks
+        </Link>
+        <span className="bp-crumbs__sep">·</span>
+        <span className="bp-crumbs__current">{task.title}</span>
+      </div>
+
+      {/* Page head */}
+      <div className="bp-page__head">
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <StatusBadge status={task.status} />
+            <span className="bp-muted" style={{ fontSize: 12 }}>v{task.version}</span>
+            {task.irreversible && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--bp-warn)" }}>
+                <AlertTriangle size={12} /> Contains irreversible steps
+              </span>
+            )}
+          </div>
+          <h1>{task.title}</h1>
+          <p className="bp-page__sub">
+            {task.domain}
+            {task.software_name && ` · ${task.software_name}${task.software_version ? ` ${task.software_version}` : ""}`}
+            {" · "}Updated {formatDate(task.updated_at)}
+          </p>
         </div>
-
-        <h1 className="text-2xl font-bold text-gray-900">{task.title}</h1>
-
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-          <span>{task.domain}</span>
-          {task.software_name && (
-            <span>
-              {task.software_name}
-              {task.software_version ? ` ${task.software_version}` : ""}
-            </span>
+        <div className="bp-page__actions">
+          {task.status === "draft" && isSelf && (
+            <Link to={`/tasks/${recordId}/${version}/edit`} className="bp-btn bp-btn--ghost">
+              Edit
+            </Link>
           )}
-          <span>Updated {formatDate(task.updated_at)}</span>
+          {task.status === "draft" && isSelf && (
+            <button className="bp-btn bp-btn--secondary" onClick={() => submitMutation.mutate()} disabled={anyPending}>
+              {submitMutation.isPending ? "Submitting…" : "Submit for review"}
+            </button>
+          )}
+          {task.status === "submitted" && !isSelf && (
+            <button className="bp-btn bp-btn--secondary" onClick={() => confirmMutation.mutate()} disabled={anyPending}>
+              {confirmMutation.isPending ? "Confirming…" : "Confirm"}
+            </button>
+          )}
+          {task.status === "submitted" && (
+            <button className="bp-btn bp-btn--ghost" onClick={() => setReturnDialogOpen(true)} disabled={anyPending}>
+              Return
+            </button>
+          )}
+          {task.status !== "draft" && (
+            <button
+              className="bp-btn bp-btn--ghost"
+              onClick={() => task.status === "returned" ? reviseMutation.mutate(undefined) : setReviseDialogOpen(true)}
+              disabled={anyPending}
+            >
+              {reviseMutation.isPending ? "Creating draft…" : "Revise"}
+            </button>
+          )}
+          {claimHeldByMe && (
+            <button className="bp-btn bp-btn--ghost" onClick={() => releaseMutation.mutate()} disabled={anyPending}>
+              {releaseMutation.isPending ? "Releasing…" : "Release claim"}
+            </button>
+          )}
         </div>
       </div>
 
+      <ReturnDialog
+        open={returnDialogOpen}
+        onOpenChange={setReturnDialogOpen}
+        onConfirm={(note) => returnMutation.mutate(note)}
+        isPending={returnMutation.isPending}
+      />
+      <ReturnDialog
+        open={reviseDialogOpen}
+        onOpenChange={setReviseDialogOpen}
+        onConfirm={(note) => reviseMutation.mutate(note)}
+        isPending={reviseMutation.isPending}
+        title="Revise task"
+        noteLabel="Reason for revision"
+        placeholder="Explain why this task needs to be revised…"
+        confirmLabel="Create draft"
+        pendingLabel="Creating draft…"
+      />
+
+      {isSelf && task.status === "submitted" && (
+        <p className="bp-muted" style={{ fontSize: 12 }}>You cannot confirm your own submission.</p>
+      )}
+
       {/* Version history */}
       {versions && versions.length > 1 && (
-        <div className="mb-6 flex items-center gap-2 text-sm">
-          <span className="text-gray-400">Versions:</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+          <span className="bp-muted">Versions:</span>
           {versions.map((v) => {
             const isCurrent = v.version === task.version;
             return isCurrent ? (
-              <span
-                key={v.version}
-                className="rounded px-2 py-0.5 bg-gray-100 font-medium text-gray-700"
-              >
+              <span key={v.version} style={{ padding: "2px 8px", borderRadius: 6, background: "color-mix(in oklab, var(--bp-accent) 15%, var(--bp-bg))", fontWeight: 700, fontSize: 12, color: "var(--bp-accent-deep)" }}>
                 v{v.version}
               </span>
             ) : (
-              <Link
-                key={v.version}
-                to={`/tasks/${recordId}/${v.version}`}
-                className="rounded px-2 py-0.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-              >
-                v{v.version}
-                <span className="ml-1 text-xs text-gray-400">({v.status})</span>
+              <Link key={v.version} to={`/tasks/${recordId}/${v.version}`} className="bp-muted" style={{ padding: "2px 8px", borderRadius: 6, fontSize: 12 }}>
+                v{v.version} <span style={{ opacity: .6 }}>({v.status})</span>
               </Link>
             );
           })}
         </div>
       )}
 
-      {/* Action bar */}
-      {task.status === "draft" && isSelf && (
-        <div className="mb-8 flex items-center gap-3">
-          <Button
-            onClick={() => submitMutation.mutate()}
-            disabled={anyPending}
-          >
-            {submitMutation.isPending ? "Submitting…" : "Submit for review"}
-          </Button>
-        </div>
-      )}
-
-      {task.status === "submitted" && (
-        <div className="mb-8 flex items-center gap-3">
-          {!isSelf && (
-            <Button onClick={() => confirmMutation.mutate()} disabled={anyPending}>
-              {confirmMutation.isPending ? "Confirming…" : "Confirm"}
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            onClick={() => setReturnDialogOpen(true)}
-            disabled={anyPending}
-          >
-            Return
-          </Button>
-          <ReturnDialog
-            open={returnDialogOpen}
-            onOpenChange={setReturnDialogOpen}
-            onConfirm={(note) => returnMutation.mutate(note)}
-            isPending={returnMutation.isPending}
-          />
-          {claimHeldByMe && (
-            <Button
-              variant="outline"
-              onClick={() => releaseMutation.mutate()}
-              disabled={anyPending}
-            >
-              {releaseMutation.isPending ? "Releasing…" : "Release claim"}
-            </Button>
-          )}
-          {isSelf && (
-            <p className="text-sm text-gray-400">
-              You cannot confirm your own submission.
-            </p>
-          )}
-        </div>
-      )}
-
+      {/* Change note */}
       {task.change_note && (
-        <div className="mb-4 rounded-md bg-amber-50 border border-amber-200 px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-600 mb-1">
+        <div style={{ background: "color-mix(in oklab, var(--bp-accent) 10%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-accent) 35%, var(--bp-border))", borderRadius: 12, padding: "10px 14px" }}>
+          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--bp-warn)", marginBottom: 4 }}>
             {task.status === "returned" ? "Return note" : "Revision note"}
           </p>
-          <p className="text-sm text-amber-900">{task.change_note}</p>
+          <p style={{ fontSize: 13, margin: 0, color: "var(--bp-ink)" }}>{task.change_note}</p>
         </div>
       )}
 
-      <div className="mb-8 flex items-center gap-3">
-        {task.status === "draft" && isSelf ? (
-          <Link to={`/tasks/${recordId}/${version}/edit`} className={buttonVariants({ variant: "outline" })}>
-            Edit task
-          </Link>
-        ) : (
-          <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (task.status === "returned") {
-                  reviseMutation.mutate(undefined);
-                } else {
-                  setReviseDialogOpen(true);
-                }
-              }}
-              disabled={anyPending}
-            >
-              {reviseMutation.isPending ? "Creating draft…" : "Revise task"}
-            </Button>
-            <ReturnDialog
-              open={reviseDialogOpen}
-              onOpenChange={setReviseDialogOpen}
-              onConfirm={(note) => reviseMutation.mutate(note)}
-              isPending={reviseMutation.isPending}
-              title="Revise task"
-              noteLabel="Reason for revision"
-              placeholder="Explain why this task needs to be revised…"
-              confirmLabel="Create draft"
-              pendingLabel="Creating draft…"
-            />
-          </>
-        )}
-      </div>
-
       {actionErrorMessage && (
-        <div className="mb-8 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+        <div style={{ fontSize: 13, color: "var(--bp-danger)", background: "color-mix(in oklab, var(--bp-danger) 8%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-danger) 25%, var(--bp-border))", borderRadius: 12, padding: "10px 14px" }}>
           {actionErrorMessage}
         </div>
       )}
 
-      <div className="space-y-8">
-        {/* Outcome */}
-        <Section title="Outcome">
-          <p className="text-gray-700">{task.outcome}</p>
+      {/* Content sections */}
+      <Section title="Outcome">
+        <p style={{ fontSize: 14, color: "var(--bp-ink)", margin: 0 }}>{task.outcome}</p>
+      </Section>
+
+      {task.facts.length > 0 && (
+        <Section title="Facts">
+          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 4 }}>
+            {task.facts.map((fact, i) => (
+              <li key={i} style={{ display: "flex", gap: 8, fontSize: 13, color: "var(--bp-ink)" }}>
+                <span className="bp-muted">·</span>{fact}
+              </li>
+            ))}
+          </ul>
         </Section>
+      )}
 
-        {/* Facts */}
-        {task.facts.length > 0 && (
-          <Section title="Facts">
-            <ul className="space-y-1">
-              {task.facts.map((fact, i) => (
-                <li key={i} className="flex gap-2 text-sm text-gray-700">
-                  <span className="shrink-0 text-gray-400">·</span>
-                  {fact}
-                </li>
-              ))}
-            </ul>
-          </Section>
-        )}
-
-        {/* Concepts */}
-        {task.concepts.length > 0 && (
-          <Section title="Concepts">
-            <ul className="space-y-1">
-              {task.concepts.map((concept, i) => (
-                <li key={i} className="flex gap-2 text-sm text-gray-700">
-                  <span className="shrink-0 text-gray-400">·</span>
-                  {concept}
-                </li>
-              ))}
-            </ul>
-          </Section>
-        )}
-
-        {/* Procedure */}
-        {task.steps.length > 0 && (
-          <Section title={`Procedure (${task.steps.length} step${task.steps.length === 1 ? "" : "s"})`}>
-            <div className="space-y-3">
-              {task.steps
-                .slice()
-                .sort((a, b) => a.order_index - b.order_index)
-                .map((step, i) => (
-                  <StepCard key={step.id} step={step} index={i} />
-                ))}
-            </div>
-          </Section>
-        )}
-
-        {/* Tags */}
-        {task.tags.length > 0 && (
-          <Section title="Tags">
-            <div className="flex flex-wrap gap-2">
-              {task.tags.map((tag) => (
-                <Badge key={tag} variant="outline">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        {/* Metadata */}
-        <Section title="Details">
-          <dl className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-            <div>
-              <dt className="text-gray-400">Created</dt>
-              <dd className="text-gray-700">{formatDate(task.created_at)}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-400">Last updated</dt>
-              <dd className="text-gray-700">{formatDate(task.updated_at)}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-400">Version</dt>
-              <dd className="text-gray-700">v{task.version}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-400">Record ID</dt>
-              <dd className="font-mono text-xs text-gray-500 truncate">{task.record_id}</dd>
-            </div>
-          </dl>
+      {task.concepts.length > 0 && (
+        <Section title="Concepts">
+          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 4 }}>
+            {task.concepts.map((concept, i) => (
+              <li key={i} style={{ display: "flex", gap: 8, fontSize: 13, color: "var(--bp-ink)" }}>
+                <span className="bp-muted">·</span>{concept}
+              </li>
+            ))}
+          </ul>
         </Section>
-      </div>
+      )}
+
+      {task.steps.length > 0 && (
+        <Section title={`Procedure · ${task.steps.length} step${task.steps.length === 1 ? "" : "s"}`}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {task.steps
+              .slice()
+              .sort((a, b) => a.order_index - b.order_index)
+              .map((step, i) => (
+                <StepCard key={step.id} step={step} index={i} />
+              ))}
+          </div>
+        </Section>
+      )}
+
+      {task.tags.length > 0 && (
+        <Section title="Tags">
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {task.tags.map((tag) => (
+              <Badge key={tag} variant="outline">{tag}</Badge>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      <Section title="Details">
+        <dl style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 32px" }}>
+          {[
+            ["Created", formatDate(task.created_at)],
+            ["Last updated", formatDate(task.updated_at)],
+            ["Version", `v${task.version}`],
+            ["Record ID", task.record_id],
+          ].map(([label, value]) => (
+            <div key={label}>
+              <dt style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--bp-muted)", marginBottom: 2 }}>{label}</dt>
+              <dd style={{ fontSize: 13, color: "var(--bp-ink)", fontFamily: label === "Record ID" ? "ui-monospace, monospace" : "inherit", wordBreak: "break-all" }}>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
     </div>
   );
 }

@@ -1,19 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
-import {
-  LayoutDashboard,
-  CheckSquare,
-  GitBranch,
-  Lightbulb,
-  ClipboardList,
-  Upload,
-  Search,
-  Settings,
-  LogOut,
-  User,
-  Bell,
-} from "lucide-react";
+import { Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "@/lib/auth";
 import { api } from "@/lib/api";
@@ -21,43 +8,38 @@ import { api } from "@/lib/api";
 interface NavItem {
   to: string;
   label: string;
-  icon: React.ElementType;
+  icon: string;
+  section: string;
   adminOnly?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/tasks", label: "Tasks", icon: CheckSquare },
-  { to: "/workflows", label: "Workflows", icon: GitBranch },
-  { to: "/principles", label: "Principles", icon: Lightbulb },
-  { to: "/review", label: "Review Queue", icon: ClipboardList },
-  { to: "/ingestion", label: "Ingestion", icon: Upload },
-  { to: "/search", label: "Search", icon: Search },
-  { to: "/admin", label: "Admin", icon: Settings, adminOnly: true },
+  { section: "Records",   to: "/tasks",      icon: "✓",  label: "Tasks" },
+  { section: "Records",   to: "/workflows",  icon: "▦",  label: "Workflows" },
+  { section: "Records",   to: "/principles", icon: "◐",  label: "Principles" },
+  { section: "Records",   to: "/review",     icon: "⧉",  label: "Review queue" },
+  { section: "Ingestion", to: "/ingestion",  icon: "⇪",  label: "Ingestion" },
+  { section: "Admin",     to: "/admin",      icon: "◉",  label: "Admin", adminOnly: true },
 ];
 
+const SECTIONS = ["Records", "Ingestion", "Admin"];
+
 function NavItemLink({ item }: { item: NavItem }) {
-  const Icon = item.icon;
   return (
     <NavLink
       to={item.to}
       end={item.to === "/"}
       className={({ isActive }) =>
-        cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-          isActive
-            ? "bg-brand-amber text-brand-black"
-            : "text-gray-400 hover:bg-white/10 hover:text-white"
-        )
+        `bp-navlink${isActive ? " bp-navlink--active" : ""}`
       }
     >
-      <Icon className="h-4 w-4 shrink-0" />
-      {item.label}
+      <span className="bp-navicon">{item.icon}</span>
+      <span className="bp-navtext">{item.label}</span>
     </NavLink>
   );
 }
 
-function NotificationBell() {
+function NotificationBell({ displayName }: { displayName: string }) {
   const { data } = useQuery({
     queryKey: ["notifications", "unread-count"],
     queryFn: () => api.get<{ id: string; read_at: string | null }[]>("/notifications?unread_only=true&limit=99"),
@@ -70,23 +52,23 @@ function NotificationBell() {
     <NavLink
       to="/notifications"
       className={({ isActive }) =>
-        cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-          isActive
-            ? "bg-brand-amber text-brand-black"
-            : "text-gray-400 hover:bg-white/10 hover:text-white"
-        )
+        `bp-navlink${isActive ? " bp-navlink--active" : ""}`
       }
     >
-      <span className="relative">
-        <Bell className="h-4 w-4 shrink-0" />
+      <span className="bp-navicon" style={{ position: "relative", display: "inline-block" }}>
+        <Bell size={13} />
         {count > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-amber text-[10px] font-bold text-brand-black">
+          <span style={{
+            position: "absolute", top: -5, right: -6,
+            background: "var(--bp-accent)", color: "#000",
+            fontSize: 9, fontWeight: 800, borderRadius: 999,
+            width: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
             {count > 9 ? "9+" : count}
           </span>
         )}
       </span>
-      Notifications
+      <span className="bp-navtext">{displayName}</span>
     </NavLink>
   );
 }
@@ -96,58 +78,81 @@ export function Layout() {
   const roles: string[] = (user?.profile["groups"] as string[]) ?? [];
   const isAdmin = roles.includes("admin");
   const displayName = user?.profile.name ?? user?.profile.email ?? "User";
+  const role = roles[0] ?? "contributor";
 
   const visibleItems = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
-      {/* Sidebar */}
-      <aside className="flex w-56 shrink-0 flex-col bg-brand-black">
-        {/* Logo */}
-        <div className="flex h-14 items-center px-4">
-          <span className="text-lg font-bold text-white tracking-tight">
-            blue<span className="text-brand-amber">printed</span>
-          </span>
-        </div>
+    <div className="bp-app">
+      <div className="bp-layout">
+        {/* Sidebar rail */}
+        <aside className="bp-rail">
+          <div className="bp-rail__head">
+            <NavLink to="/" style={{ textDecoration: "none" }}>
+              <span className="bp-rail__logo-text">
+                blue<span>printed</span>.io
+              </span>
+            </NavLink>
+          </div>
 
-        {/* Nav */}
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
-          {visibleItems.map((item) => (
-            <NavItemLink key={item.to} item={item} />
-          ))}
-          <NotificationBell />
-        </nav>
+          {/* Profile block */}
+          <section className="bp-rail__profile">
+            <div className="bp-rail__avatar" aria-hidden="true">
+              {displayName[0]?.toUpperCase() ?? "?"}
+            </div>
+            <div className="bp-rail__profile-text">
+              <span className="bp-rail__profile-label">Signed in</span>
+              <span className="bp-rail__profile-user">{displayName}</span>
+              <span className="bp-rail__profile-role">{role}</span>
+            </div>
+            <button className="bp-rail__logout" onClick={() => void signOut()} title="Sign out" aria-label="Sign out">
+              ⎋
+            </button>
+          </section>
 
-        {/* User footer */}
-        <div className="border-t border-white/10 p-2">
-          <NavLink
-            to="/profile"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-brand-amber text-brand-black"
-                  : "text-gray-400 hover:bg-white/10 hover:text-white"
-              )
-            }
-          >
-            <User className="h-4 w-4 shrink-0" />
-            <span className="truncate">{displayName}</span>
-          </NavLink>
-          <button
-            onClick={() => void signOut()}
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <LogOut className="h-4 w-4 shrink-0" />
-            Sign out
-          </button>
-        </div>
-      </aside>
+          {/* Dashboard link */}
+          <nav className="bp-rail__nav">
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) =>
+                `bp-navlink${isActive ? " bp-navlink--active" : ""}`
+              }
+            >
+              <span className="bp-navicon">⌂</span>
+              <span className="bp-navtext">Dashboard</span>
+            </NavLink>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
-        <Outlet />
-      </main>
+            {SECTIONS.map((section) => {
+              const items = visibleItems.filter((i) => i.section === section);
+              if (!items.length) return null;
+              return (
+                <div className="bp-rail__section" key={section}>
+                  <div className="bp-rail__section-title">{section}</div>
+                  {items.map((item) => (
+                    <NavItemLink key={item.to} item={item} />
+                  ))}
+                </div>
+              );
+            })}
+
+            {/* Notifications at the bottom of nav */}
+            <div className="bp-rail__section">
+              <div className="bp-rail__section-title">Activity</div>
+              <NotificationBell displayName="Notifications" />
+            </div>
+          </nav>
+
+          <div className="bp-rail__foot">
+            <span className="bp-muted">blueprinted.io · AGPL-3.0</span>
+          </div>
+        </aside>
+
+        {/* Main content */}
+        <main className="bp-content">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

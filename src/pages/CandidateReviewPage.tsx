@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 
 interface Candidate {
@@ -23,12 +23,6 @@ interface CommitForm {
   target_status: "draft" | "submitted";
 }
 
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  pending: "outline",
-  accepted: "default",
-  edited: "secondary",
-  discarded: "destructive",
-};
 
 function CandidateCard({
   candidate,
@@ -87,9 +81,7 @@ function CandidateCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <Badge variant={STATUS_VARIANT[candidate.candidate_status] ?? "outline"}>
-              {candidate.candidate_status}
-            </Badge>
+            <StatusBadge status={candidate.candidate_status} />
             <span className="text-xs uppercase font-medium text-gray-400">{candidate.record_type}</span>
           </div>
           <p className="text-sm font-medium text-gray-900 truncate">{title}</p>
