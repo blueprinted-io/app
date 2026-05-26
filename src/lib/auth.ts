@@ -15,13 +15,13 @@ export const userManager = new UserManager({
   redirect_uri: `${window.location.origin}/callback`,
   post_logout_redirect_uri: `${window.location.origin}/login`,
   response_type: "code",
-  scope: "openid profile email blueprinted_roles",
+  // offline_access causes Authentik to issue a refresh token.
+  // oidc-client-ts uses grant_type=refresh_token for silent renew, bypassing
+  // Authentik's X-Frame-Options: deny that blocks the iframe approach.
+  scope: "openid profile email blueprinted_roles offline_access",
   // PKCE is automatic with response_type=code in oidc-client-ts.
-  userStore: new WebStorageStateStore({ store: window.sessionStorage }),
-  // Authentik sets X-Frame-Options: deny so iframe-based silent renew is blocked.
-  // Disable it to suppress the console flood; session tokens last long enough
-  // that users just need to re-login when they expire.
-  automaticSilentRenew: false,
+  userStore: new WebStorageStateStore({ store: window.localStorage }),
+  automaticSilentRenew: true,
 });
 
 export async function signIn(): Promise<void> {
