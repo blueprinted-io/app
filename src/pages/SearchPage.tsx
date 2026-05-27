@@ -30,7 +30,6 @@ const TYPE_LABEL: Record<string, string> = {
   principle: "Principle",
 };
 
-
 type TypeFilter = "all" | "task" | "workflow" | "principle";
 
 const TYPE_FILTERS: { value: TypeFilter; label: string }[] = [
@@ -68,45 +67,57 @@ export function SearchPage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl">
-      <h1 className="text-2xl font-bold text-gray-900">Search</h1>
-      <p className="mt-1 text-sm text-gray-500">
-        Search across confirmed tasks, workflows, and principles.
-      </p>
+    <div className="bp-page" style={{ maxWidth: 720 }}>
+      <div className="bp-page__head">
+        <div>
+          <h1>Search</h1>
+          <p className="bp-page__sub">Search across confirmed tasks, workflows, and principles.</p>
+        </div>
+      </div>
 
       {/* Search input */}
-      <form onSubmit={handleSubmit} className="mt-6 flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+      <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
+        <div style={{ position: "relative", flex: 1 }}>
+          <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--bp-muted)", pointerEvents: "none" }} />
           <input
             type="search"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Search…"
-            className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-amber focus:outline-none focus:ring-1 focus:ring-brand-amber"
+            style={{
+              width: "100%", boxSizing: "border-box",
+              padding: "8px 12px 8px 32px",
+              border: "1px solid var(--bp-border)", borderRadius: 10,
+              background: "var(--bp-panel)", color: "var(--bp-ink)",
+              fontSize: 13, outline: "none",
+            }}
           />
         </div>
         <button
           type="submit"
           disabled={!input.trim()}
-          className="rounded-md bg-brand-amber px-4 py-2 text-sm font-medium text-brand-black hover:opacity-90 disabled:opacity-40"
+          className="bp-btn bp-btn--secondary"
         >
           Search
         </button>
       </form>
 
       {/* Type filter chips */}
-      <div className="mt-4 flex gap-2">
+      <div style={{ display: "flex", gap: 6 }}>
         {TYPE_FILTERS.map((f) => (
           <button
             key={f.value}
             type="button"
             onClick={() => setTypeFilter(f.value)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              typeFilter === f.value
-                ? "bg-brand-amber text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+            style={{
+              padding: "4px 12px", borderRadius: 999,
+              fontSize: 12, fontWeight: 600, cursor: "pointer",
+              border: "1px solid",
+              background: typeFilter === f.value ? "var(--bp-accent)" : "var(--bp-panel)",
+              color: typeFilter === f.value ? "var(--bp-brand)" : "var(--bp-muted)",
+              borderColor: typeFilter === f.value ? "var(--bp-accent)" : "var(--bp-border)",
+              transition: "background .12s ease",
+            }}
           >
             {f.label}
           </button>
@@ -114,48 +125,48 @@ export function SearchPage() {
       </div>
 
       {/* Results */}
-      <div className="mt-8 space-y-3">
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {isLoading && (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-amber border-t-transparent" />
-            Searching…
-          </div>
+          <p className="bp-muted" style={{ fontSize: 13 }}>Searching…</p>
         )}
 
         {error && (
-          <p className="text-sm text-red-600">Search failed. Please try again.</p>
+          <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>Search failed. Please try again.</p>
         )}
 
         {data && data.total === 0 && (
-          <p className="text-sm text-gray-500">
-            No results for <span className="font-medium">"{activeQuery}"</span>.
+          <p className="bp-muted" style={{ fontSize: 13 }}>
+            No results for <span style={{ fontWeight: 600, color: "var(--bp-ink)" }}>"{activeQuery}"</span>.
           </p>
         )}
 
         {data && data.total > 0 && (
           <>
-            <p className="text-sm text-gray-500">
+            <p className="bp-muted" style={{ fontSize: 13 }}>
               {data.total} result{data.total !== 1 ? "s" : ""} for{" "}
-              <span className="font-medium">"{activeQuery}"</span>
+              <span style={{ fontWeight: 600, color: "var(--bp-ink)" }}>"{activeQuery}"</span>
             </p>
             {data.results.map((result) => (
               <Link
                 key={result.id}
                 to={resultHref(result)}
-                className="block rounded-lg border border-gray-200 bg-white p-4 hover:border-brand-amber transition-colors"
+                className="bp-card"
+                style={{ display: "block", padding: "14px 16px", textDecoration: "none", transition: "box-shadow .15s ease" }}
               >
-                <div className="flex items-center gap-2">
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                   <Badge variant="outline">
                     {TYPE_LABEL[result.record_type] ?? result.record_type}
                   </Badge>
                   <StatusBadge status={result.status} />
                   {result.domain && (
-                    <span className="text-xs text-gray-400">{result.domain}</span>
+                    <span style={{ fontSize: 11, color: "var(--bp-muted)" }}>{result.domain}</span>
                   )}
                 </div>
-                <p className="mt-2 text-sm font-medium text-gray-900">{result.title}</p>
+                <p style={{ fontSize: 13, fontWeight: 600, color: "var(--bp-ink)", margin: 0 }}>{result.title}</p>
                 {result.excerpt && (
-                  <p className="mt-1 text-sm text-gray-500 line-clamp-2">{result.excerpt}</p>
+                  <p style={{ marginTop: 4, fontSize: 12, color: "var(--bp-muted)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    {result.excerpt}
+                  </p>
                 )}
               </Link>
             ))}

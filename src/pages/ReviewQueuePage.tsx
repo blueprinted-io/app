@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/StatusBadge";
 import { ReturnDialog } from "@/components/ReturnDialog";
 
 // ---------------------------------------------------------------------------
@@ -45,7 +44,6 @@ const TYPE_LABEL: Record<string, string> = {
   principle: "Principle",
 };
 
-// Plural entity_type as expected by the review API route
 const TYPE_PLURAL: Record<string, string> = {
   task: "tasks",
   workflow: "workflows",
@@ -69,6 +67,16 @@ function recordHref(item: QueueItem): string {
 // ---------------------------------------------------------------------------
 // Row component
 // ---------------------------------------------------------------------------
+
+const typePillStyle: React.CSSProperties = {
+  display: "inline-block",
+  padding: "2px 8px", borderRadius: 6,
+  fontSize: 11, fontWeight: 700,
+  background: "color-mix(in oklab, var(--bp-accent-blue) 10%, var(--bp-bg))",
+  color: "var(--bp-accent-blue)",
+  border: "1px solid color-mix(in oklab, var(--bp-accent-blue) 20%, var(--bp-border))",
+  whiteSpace: "nowrap" as const,
+};
 
 function QueueRow({
   item,
@@ -121,70 +129,50 @@ function QueueRow({
   const claimedByOther = !!item.claim && !claimedByMe;
 
   return (
-    <tr className="border-b border-gray-100 last:border-0">
-      {/* Type */}
-      <td className="px-4 py-3 align-top">
-        <Badge variant="outline" className="whitespace-nowrap">
-          {TYPE_LABEL[item.record_type] ?? item.record_type}
-        </Badge>
+    <tr style={{ borderBottom: "1px solid var(--bp-border)" }}>
+      <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
+        <span style={typePillStyle}>{TYPE_LABEL[item.record_type] ?? item.record_type}</span>
       </td>
-
-      {/* Title */}
-      <td className="px-4 py-3 align-top">
-        <Link to={href} className="text-sm font-medium text-gray-900 hover:text-brand-amber">
+      <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
+        <Link to={href} style={{ fontSize: 13, fontWeight: 600, color: "var(--bp-ink)", textDecoration: "none" }}>
           {item.title}
         </Link>
         {item.domain && (
-          <p className="mt-0.5 text-xs text-gray-400">{item.domain}</p>
+          <p style={{ marginTop: 2, fontSize: 11, color: "var(--bp-muted)" }}>{item.domain}</p>
         )}
       </td>
-
-      {/* Submitted */}
-      <td className="px-4 py-3 align-top text-sm text-gray-500 whitespace-nowrap">
+      <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
+        <StatusBadge status={item.status} />
+      </td>
+      <td style={{ padding: "10px 14px", verticalAlign: "top", fontSize: 12, color: "var(--bp-muted)", whiteSpace: "nowrap" }}>
         {formatDate(item.updated_at)}
       </td>
-
-      {/* Claim status */}
-      <td className="px-4 py-3 align-top">
+      <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
         {claimedByMe && (
-          <span className="text-xs text-brand-amber font-medium">Claimed by you</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--bp-accent-deep)" }}>Claimed by you</span>
         )}
         {claimedByOther && (
-          <span className="text-xs text-gray-400">Claimed</span>
+          <span style={{ fontSize: 11, color: "var(--bp-muted)" }}>Claimed</span>
         )}
       </td>
-
-      {/* Actions */}
-      <td className="px-4 py-3 align-top">
-        <div className="flex items-center gap-2">
+      <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           {claimedByMe ? (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => releaseMutation.mutate()}
-              disabled={anyPending}
-            >
+            <button className="bp-btn bp-btn--ghost" style={{ fontSize: 12, padding: "4px 10px" }}
+              onClick={() => releaseMutation.mutate()} disabled={anyPending}>
               {releaseMutation.isPending ? "Releasing…" : "Release"}
-            </Button>
+            </button>
           ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => claimMutation.mutate()}
-              disabled={anyPending || claimedByOther}
-              title={claimedByOther ? "Claimed by another reviewer" : undefined}
-            >
+            <button className="bp-btn bp-btn--ghost" style={{ fontSize: 12, padding: "4px 10px" }}
+              onClick={() => claimMutation.mutate()} disabled={anyPending || claimedByOther}
+              title={claimedByOther ? "Claimed by another reviewer" : undefined}>
               {claimMutation.isPending ? "Claiming…" : "Claim"}
-            </Button>
+            </button>
           )}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setReturnDialogOpen(true)}
-            disabled={anyPending}
-          >
+          <button className="bp-btn bp-btn--ghost" style={{ fontSize: 12, padding: "4px 10px" }}
+            onClick={() => setReturnDialogOpen(true)} disabled={anyPending}>
             Return
-          </Button>
+          </button>
           <ReturnDialog
             open={returnDialogOpen}
             onOpenChange={setReturnDialogOpen}
@@ -201,6 +189,17 @@ function QueueRow({
 // Page
 // ---------------------------------------------------------------------------
 
+const thStyle: React.CSSProperties = {
+  padding: "10px 14px",
+  textAlign: "left",
+  fontSize: 11, fontWeight: 800,
+  letterSpacing: ".05em", textTransform: "uppercase",
+  color: "var(--bp-muted)",
+  borderBottom: "1px solid var(--bp-border)",
+  background: "var(--bp-bg)",
+  whiteSpace: "nowrap",
+};
+
 export function ReviewQueuePage() {
   const queryClient = useQueryClient();
 
@@ -215,77 +214,62 @@ export function ReviewQueuePage() {
   });
 
   function handleActionError(msg: string) {
-    // Refetch so the queue reflects current state even on error
     queryClient.invalidateQueries({ queryKey: ["review-queue"] });
-    // Surface the error via a simple alert for now — a toast system would be better
-    // but there's no toast infrastructure yet
     window.alert(msg);
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900">Review Queue</h1>
-      <p className="mt-1 text-sm text-gray-500">
-        Submitted records in your assigned domains, excluding your own submissions.
-      </p>
-
-      <div className="mt-8">
-        {isLoading && (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-amber border-t-transparent" />
-            Loading queue…
-          </div>
-        )}
-
-        {error && (
-          <p className="text-sm text-red-600">Failed to load review queue.</p>
-        )}
-
-        {queue && queue.total === 0 && (
-          <p className="text-sm text-gray-500">Nothing awaiting review.</p>
-        )}
-
-        {queue && queue.total > 0 && (
-          <>
-            <p className="mb-4 text-sm text-gray-500">
-              {queue.total} item{queue.total !== 1 ? "s" : ""} awaiting review
-            </p>
-            <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-400 w-24">
-                      Type
-                    </th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                      Title
-                    </th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-400 w-32">
-                      Submitted
-                    </th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-400 w-32">
-                      Claim
-                    </th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-400 w-56">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {queue.items.map((item) => (
-                    <QueueRow
-                      key={item.id}
-                      item={item}
-                      currentUserId={currentUser?.id}
-                      onActionError={handleActionError}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+    <div className="bp-page">
+      <div className="bp-page__head">
+        <div>
+          <h1>Review Queue</h1>
+          <p className="bp-page__sub">Submitted records in your assigned domains, excluding your own submissions.</p>
+        </div>
       </div>
+
+      {isLoading && (
+        <p className="bp-muted" style={{ fontSize: 13 }}>Loading queue…</p>
+      )}
+
+      {error && (
+        <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>Failed to load review queue.</p>
+      )}
+
+      {queue && queue.total === 0 && (
+        <p className="bp-muted" style={{ fontSize: 13 }}>Nothing awaiting review.</p>
+      )}
+
+      {queue && queue.total > 0 && (
+        <>
+          <p className="bp-muted" style={{ fontSize: 13 }}>
+            {queue.total} item{queue.total !== 1 ? "s" : ""} awaiting review
+          </p>
+          <div className="bp-card" style={{ overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Type</th>
+                  <th style={thStyle}>Title</th>
+                  <th style={thStyle}>Status</th>
+                  <th style={thStyle}>Submitted</th>
+                  <th style={thStyle}>Claim</th>
+                  <th style={thStyle}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {queue.items.map((item) => (
+                  <QueueRow
+                    key={item.id}
+                    item={item}
+                    currentUserId={currentUser?.id}
+                    onActionError={handleActionError}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

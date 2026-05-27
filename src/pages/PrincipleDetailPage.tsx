@@ -5,7 +5,6 @@ import { ArrowLeft } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Button, buttonVariants } from "@/components/ui/button";
 import { ReturnDialog } from "@/components/ReturnDialog";
 
 // ---------------------------------------------------------------------------
@@ -43,7 +42,6 @@ interface PrincipleDetail {
 // Helpers
 // ---------------------------------------------------------------------------
 
-
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
@@ -58,10 +56,10 @@ function formatDate(iso: string): string {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section>
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
-        {title}
-      </h2>
+    <section className="bp-card" style={{ padding: 18 }}>
+      <div className="bp-section-head">
+        <h3>{title}</h3>
+      </div>
       {children}
     </section>
   );
@@ -161,215 +159,183 @@ export function PrincipleDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8 flex items-center gap-2 text-sm text-gray-500">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-amber border-t-transparent" />
-        Loading principle…
+      <div className="bp-page">
+        <p className="bp-muted" style={{ fontSize: 13 }}>Loading principle…</p>
       </div>
     );
   }
 
   if (error || !principle) {
     return (
-      <div className="p-8">
-        <p className="text-sm text-red-600">Principle not found or failed to load.</p>
-        <Link to="/principles" className="mt-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
-          <ArrowLeft className="h-4 w-4" /> Back to principles
+      <div className="bp-page">
+        <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>Principle not found or failed to load.</p>
+        <Link to="/principles" className="bp-link" style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={14} /> Back to principles
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="p-8 max-w-3xl">
-      <Link
-        to="/principles"
-        className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-6"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Principles
-      </Link>
+    <div className="bp-page" style={{ maxWidth: 820 }}>
 
-      <div className="mb-8">
-        <div className="flex flex-wrap items-center gap-2 mb-2">
-          <StatusBadge status={principle.status} />
-          <span className="text-sm text-gray-400">v{principle.version}</span>
+      {/* Breadcrumb */}
+      <div className="bp-crumbs">
+        <Link to="/principles" className="bp-link" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={12} /> Principles
+        </Link>
+        <span className="bp-crumbs__sep">·</span>
+        <span className="bp-crumbs__current">{principle.title}</span>
+      </div>
+
+      {/* Page head */}
+      <div className="bp-page__head">
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <StatusBadge status={principle.status} />
+            <span className="bp-muted" style={{ fontSize: 12 }}>v{principle.version}</span>
+          </div>
+          <h1>{principle.title}</h1>
+          <p className="bp-page__sub">
+            {principle.domain}
+            {" · "}Updated {formatDate(principle.updated_at)}
+          </p>
         </div>
-
-        <h1 className="text-2xl font-bold text-gray-900">{principle.title}</h1>
-
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-          <span>{principle.domain}</span>
-          <span>Updated {formatDate(principle.updated_at)}</span>
+        <div className="bp-page__actions">
+          {principle.status === "draft" && isSelf && (
+            <Link to={`/principles/${principle.id}/edit`} className="bp-btn bp-btn--ghost">
+              Edit
+            </Link>
+          )}
+          {principle.status === "draft" && isSelf && (
+            <button className="bp-btn bp-btn--secondary" onClick={() => submitMutation.mutate()} disabled={anyPending}>
+              {submitMutation.isPending ? "Submitting…" : "Submit for review"}
+            </button>
+          )}
+          {principle.status === "submitted" && !isSelf && (
+            <button className="bp-btn bp-btn--secondary" onClick={() => confirmMutation.mutate()} disabled={anyPending}>
+              {confirmMutation.isPending ? "Confirming…" : "Confirm"}
+            </button>
+          )}
+          {principle.status === "submitted" && (
+            <button className="bp-btn bp-btn--ghost" onClick={() => setReturnDialogOpen(true)} disabled={anyPending}>
+              Return
+            </button>
+          )}
+          {principle.status !== "draft" && (
+            <button
+              className="bp-btn bp-btn--ghost"
+              onClick={() => principle.status === "returned" ? reviseMutation.mutate(undefined) : setReviseDialogOpen(true)}
+              disabled={anyPending}
+            >
+              {reviseMutation.isPending ? "Creating draft…" : "Revise"}
+            </button>
+          )}
+          {claimHeldByMe && (
+            <button className="bp-btn bp-btn--ghost" onClick={() => releaseMutation.mutate()} disabled={anyPending}>
+              {releaseMutation.isPending ? "Releasing…" : "Release claim"}
+            </button>
+          )}
         </div>
       </div>
 
+      <ReturnDialog
+        open={returnDialogOpen}
+        onOpenChange={setReturnDialogOpen}
+        onConfirm={(note) => returnMutation.mutate(note)}
+        isPending={returnMutation.isPending}
+      />
+      <ReturnDialog
+        open={reviseDialogOpen}
+        onOpenChange={setReviseDialogOpen}
+        onConfirm={(note) => reviseMutation.mutate(note)}
+        isPending={reviseMutation.isPending}
+        title="Revise principle"
+        noteLabel="Reason for revision"
+        placeholder="Explain why this principle needs to be revised…"
+        confirmLabel="Create draft"
+        pendingLabel="Creating draft…"
+      />
+
+      {isSelf && principle.status === "submitted" && (
+        <p className="bp-muted" style={{ fontSize: 12 }}>You cannot confirm your own submission.</p>
+      )}
+
       {/* Version history */}
       {versions && versions.length > 1 && (
-        <div className="mb-6 flex items-center gap-2 text-sm">
-          <span className="text-gray-400">Versions:</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+          <span className="bp-muted">Versions:</span>
           {versions.map((v) => {
             const isCurrent = v.id === principle.id;
             return isCurrent ? (
-              <span
-                key={v.id}
-                className="rounded px-2 py-0.5 bg-gray-100 font-medium text-gray-700"
-              >
+              <span key={v.id} style={{ padding: "2px 8px", borderRadius: 6, background: "color-mix(in oklab, var(--bp-accent) 15%, var(--bp-bg))", fontWeight: 700, fontSize: 12, color: "var(--bp-accent-deep)" }}>
                 v{v.version}
               </span>
             ) : (
-              <Link
-                key={v.id}
-                to={`/principles/${v.id}`}
-                className="rounded px-2 py-0.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-              >
-                v{v.version}
-                <span className="ml-1 text-xs text-gray-400">({v.status})</span>
+              <Link key={v.id} to={`/principles/${v.id}`} className="bp-muted" style={{ padding: "2px 8px", borderRadius: 6, fontSize: 12 }}>
+                v{v.version} <span style={{ opacity: .6 }}>({v.status})</span>
               </Link>
             );
           })}
         </div>
       )}
 
-      {/* Action bar */}
-      {principle.status === "draft" && isSelf && (
-        <div className="mb-8 flex items-center gap-3">
-          <Button onClick={() => submitMutation.mutate()} disabled={anyPending}>
-            {submitMutation.isPending ? "Submitting…" : "Submit for review"}
-          </Button>
-        </div>
-      )}
-
-      {principle.status === "submitted" && (
-        <div className="mb-8 flex items-center gap-3">
-          {!isSelf && (
-            <Button onClick={() => confirmMutation.mutate()} disabled={anyPending}>
-              {confirmMutation.isPending ? "Confirming…" : "Confirm"}
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            onClick={() => setReturnDialogOpen(true)}
-            disabled={anyPending}
-          >
-            Return
-          </Button>
-          <ReturnDialog
-            open={returnDialogOpen}
-            onOpenChange={setReturnDialogOpen}
-            onConfirm={(note) => returnMutation.mutate(note)}
-            isPending={returnMutation.isPending}
-          />
-          {claimHeldByMe && (
-            <Button
-              variant="outline"
-              onClick={() => releaseMutation.mutate()}
-              disabled={anyPending}
-            >
-              {releaseMutation.isPending ? "Releasing…" : "Release claim"}
-            </Button>
-          )}
-          {isSelf && (
-            <p className="text-sm text-gray-400">You cannot confirm your own submission.</p>
-          )}
-        </div>
-      )}
-
+      {/* Change note */}
       {principle.change_note && (
-        <div className="mb-4 rounded-md bg-amber-50 border border-amber-200 px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-600 mb-1">
+        <div style={{ background: "color-mix(in oklab, var(--bp-accent) 10%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-accent) 35%, var(--bp-border))", borderRadius: 12, padding: "10px 14px" }}>
+          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--bp-warn)", marginBottom: 4 }}>
             {principle.status === "returned" ? "Return note" : "Revision note"}
           </p>
-          <p className="text-sm text-amber-900">{principle.change_note}</p>
+          <p style={{ fontSize: 13, margin: 0, color: "var(--bp-ink)" }}>{principle.change_note}</p>
         </div>
       )}
 
-      <div className="mb-8 flex items-center gap-3">
-        {principle.status === "draft" && isSelf ? (
-          <Link to={`/principles/${principle.id}/edit`} className={buttonVariants({ variant: "outline" })}>
-            Edit principle
-          </Link>
-        ) : (
-          <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (principle.status === "returned") {
-                  reviseMutation.mutate(undefined);
-                } else {
-                  setReviseDialogOpen(true);
-                }
-              }}
-              disabled={anyPending}
-            >
-              {reviseMutation.isPending ? "Creating draft…" : "Revise principle"}
-            </Button>
-            <ReturnDialog
-              open={reviseDialogOpen}
-              onOpenChange={setReviseDialogOpen}
-              onConfirm={(note) => reviseMutation.mutate(note)}
-              isPending={reviseMutation.isPending}
-              title="Revise principle"
-              noteLabel="Reason for revision"
-              placeholder="Explain why this principle needs to be revised…"
-              confirmLabel="Create draft"
-              pendingLabel="Creating draft…"
-            />
-          </>
-        )}
-      </div>
-
       {actionErrorMessage && (
-        <div className="mb-8 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+        <div style={{ fontSize: 13, color: "var(--bp-danger)", background: "color-mix(in oklab, var(--bp-danger) 8%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-danger) 25%, var(--bp-border))", borderRadius: 12, padding: "10px 14px" }}>
           {actionErrorMessage}
         </div>
       )}
 
-      <div className="space-y-8">
-        <Section title="Summary">
-          <p className="text-gray-700">{principle.summary}</p>
+      {/* Content sections */}
+      <Section title="Summary">
+        <p style={{ fontSize: 14, color: "var(--bp-ink)", margin: 0 }}>{principle.summary}</p>
+      </Section>
+
+      <Section title="Explanation">
+        <p style={{ fontSize: 14, color: "var(--bp-ink)", margin: 0, whiteSpace: "pre-wrap" }}>{principle.explanation}</p>
+      </Section>
+
+      {principle.analogies && (
+        <Section title="Analogies">
+          <p style={{ fontSize: 14, color: "var(--bp-ink)", margin: 0, whiteSpace: "pre-wrap" }}>{principle.analogies}</p>
         </Section>
+      )}
 
-        <Section title="Explanation">
-          <p className="text-gray-700 whitespace-pre-wrap">{principle.explanation}</p>
+      {principle.tags.length > 0 && (
+        <Section title="Tags">
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {principle.tags.map((tag) => (
+              <Badge key={tag} variant="outline">{tag}</Badge>
+            ))}
+          </div>
         </Section>
+      )}
 
-        {principle.analogies && (
-          <Section title="Analogies">
-            <p className="text-gray-700 whitespace-pre-wrap">{principle.analogies}</p>
-          </Section>
-        )}
-
-        {principle.tags.length > 0 && (
-          <Section title="Tags">
-            <div className="flex flex-wrap gap-2">
-              {principle.tags.map((tag) => (
-                <Badge key={tag} variant="outline">{tag}</Badge>
-              ))}
+      <Section title="Details">
+        <dl style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 32px" }}>
+          {[
+            ["Created", formatDate(principle.created_at)],
+            ["Last updated", formatDate(principle.updated_at)],
+            ["Version", `v${principle.version}`],
+            ["Record ID", principle.record_id],
+          ].map(([label, value]) => (
+            <div key={label}>
+              <dt style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--bp-muted)", marginBottom: 2 }}>{label}</dt>
+              <dd style={{ fontSize: 13, color: "var(--bp-ink)", fontFamily: label === "Record ID" ? "ui-monospace, monospace" : "inherit", wordBreak: "break-all" }}>{value}</dd>
             </div>
-          </Section>
-        )}
-
-        <Section title="Details">
-          <dl className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-            <div>
-              <dt className="text-gray-400">Created</dt>
-              <dd className="text-gray-700">{formatDate(principle.created_at)}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-400">Last updated</dt>
-              <dd className="text-gray-700">{formatDate(principle.updated_at)}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-400">Version</dt>
-              <dd className="text-gray-700">v{principle.version}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-400">Record ID</dt>
-              <dd className="font-mono text-xs text-gray-500 truncate">{principle.record_id}</dd>
-            </div>
-          </dl>
-        </Section>
-      </div>
+          ))}
+        </dl>
+      </Section>
     </div>
   );
 }

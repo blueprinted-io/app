@@ -6,17 +6,19 @@ export function DashboardPage() {
   const name = user?.profile.name ?? user?.profile.email ?? "there";
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900">
-        Welcome back, {name.split(" ")[0]}
-      </h1>
-      <p className="mt-1 text-sm text-gray-500">
-        {roles.includes("admin") ? "Admin" : "Contributor"} dashboard
-      </p>
+    <div className="bp-page">
+      <div className="bp-page__head">
+        <div>
+          <h1>Welcome back, {name.split(" ")[0]}</h1>
+          <p className="bp-page__sub">
+            {roles.includes("admin") ? "Admin" : "Contributor"} dashboard
+          </p>
+        </div>
+      </div>
 
       {/* Placeholder — analytics and widgets added in next session (§23.2) */}
-      <div className="mt-8 rounded-lg border border-dashed border-gray-300 bg-white p-12 text-center">
-        <p className="text-sm text-gray-400">
+      <div className="bp-card" style={{ padding: "48px 24px", textAlign: "center" }}>
+        <p className="bp-muted" style={{ fontSize: 13 }}>
           Dashboard content coming in Sprint 8 continuation.
         </p>
       </div>

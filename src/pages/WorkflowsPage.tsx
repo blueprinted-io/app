@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
 import { api } from "@/lib/api";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
@@ -22,7 +21,6 @@ interface WorkflowSummary {
   updated_at: string;
 }
 
-
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
@@ -38,76 +36,64 @@ export function WorkflowsPage() {
   });
 
   return (
-    <div className="p-8">
-      <div className="flex items-start justify-between">
+    <div className="bp-page">
+      <div className="bp-page__head">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Workflows</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            All workflows across your assigned domains.
-          </p>
+          <h1>Workflows</h1>
+          <p className="bp-page__sub">All workflows across your assigned domains.</p>
         </div>
-        <Link
-          to="/workflows/new"
-          className="inline-flex items-center gap-1.5 rounded-md bg-brand-amber px-3 py-2 text-sm font-medium text-white hover:bg-amber-500 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          New workflow
-        </Link>
+        <div className="bp-page__actions">
+          <Link to="/workflows/new" className="bp-btn bp-btn--secondary">
+            + New workflow
+          </Link>
+        </div>
       </div>
 
+      {isLoading && (
+        <p className="bp-muted" style={{ fontSize: 13 }}>Loading workflows…</p>
+      )}
 
-      <div className="mt-8">
-        {isLoading && (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-amber border-t-transparent" />
-            Loading workflows…
-          </div>
-        )}
+      {error && (
+        <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>Failed to load workflows.</p>
+      )}
 
-        {error && (
-          <p className="text-sm text-red-600">Failed to load workflows.</p>
-        )}
+      {data && data.length === 0 && (
+        <p className="bp-muted" style={{ fontSize: 13 }}>No workflows yet.</p>
+      )}
 
-        {data && data.length === 0 && (
-          <p className="text-sm text-gray-500">No workflows yet.</p>
-        )}
-
-        {data && data.length > 0 && (
-          <div className="rounded-lg border border-gray-200 bg-white">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Domain</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last updated</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((workflow) => (
-                  <TableRow key={workflow.id} className="hover:bg-gray-50">
-                    <TableCell>
-                      <Link
-                        to={`/workflows/${workflow.id}`}
-                        className="font-medium text-gray-900 hover:text-brand-amber"
-                      >
-                        {workflow.title}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-gray-500">{workflow.domain}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={workflow.status} />
-                    </TableCell>
-                    <TableCell className="text-gray-500">
-                      {formatDate(workflow.updated_at)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
+      {data && data.length > 0 && (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Domain</TableHead>
+              <TableHead>Version</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Last updated</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((workflow) => (
+              <TableRow key={workflow.id}>
+                <TableCell>
+                  <Link
+                    to={`/workflows/${workflow.id}`}
+                    style={{ fontWeight: 600, color: "var(--bp-ink)" }}
+                  >
+                    {workflow.title}
+                  </Link>
+                </TableCell>
+                <TableCell>{workflow.domain}</TableCell>
+                <TableCell>v{workflow.version}</TableCell>
+                <TableCell>
+                  <StatusBadge status={workflow.status} />
+                </TableCell>
+                <TableCell>{formatDate(workflow.updated_at)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }
