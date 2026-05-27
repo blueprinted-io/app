@@ -22,7 +22,6 @@ interface IngestionSummary {
   created_at: string;
 }
 
-
 const SOURCE_ICON: Record<string, React.ElementType> = {
   pdf: FileText,
   html: Globe,
@@ -56,98 +55,79 @@ export function IngestionListPage() {
   });
 
   return (
-    <div className="p-8">
-      <div className="flex items-start justify-between">
+    <div className="bp-page">
+      <div className="bp-page__head">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Ingestion</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Import documents and review extracted candidates.
-          </p>
+          <h1>Ingestion</h1>
+          <p className="bp-page__sub">Import documents and review extracted candidates.</p>
         </div>
-        <Link
-          to="/ingestion/new"
-          className="inline-flex items-center gap-1.5 rounded-md bg-brand-amber px-3 py-2 text-sm font-medium text-white hover:bg-amber-500 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          New import
+        <Link to="/ingestion/new" className="bp-btn bp-btn--secondary">
+          <Plus size={14} /> New import
         </Link>
       </div>
 
-      <div className="mt-8">
-        {isLoading && (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-amber border-t-transparent" />
-            Loading…
-          </div>
-        )}
+      {isLoading && <p className="bp-muted" style={{ fontSize: 13 }}>Loading…</p>}
+      {error && <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>Failed to load ingestion history.</p>}
 
-        {error && <p className="text-sm text-red-600">Failed to load ingestion history.</p>}
+      {data && data.length === 0 && (
+        <p className="bp-muted" style={{ fontSize: 13 }}>No imports yet. Start one above.</p>
+      )}
 
-        {data && data.length === 0 && (
-          <p className="text-sm text-gray-500">No imports yet. Start one above.</p>
-        )}
-
-        {data && data.length > 0 && (
-          <div className="rounded-lg border border-gray-200 bg-white">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Chunks</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((ing) => {
-                  const Icon = SOURCE_ICON[ing.source_type] ?? FileText;
-                  return (
-                    <TableRow key={ing.id} className="hover:bg-gray-50">
-                      <TableCell>
-                        <Link
-                          to={`/ingestion/${ing.id}`}
-                          className="flex items-center gap-2 font-medium text-gray-900 hover:text-brand-amber"
-                        >
-                          <Icon className="h-4 w-4 shrink-0 text-gray-400" />
-                          <span className="truncate max-w-xs">{sourceLabel(ing)}</span>
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-gray-500 uppercase text-xs font-medium">
-                        {ing.source_type}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={ing.status} />
-                      </TableCell>
-                      <TableCell className="text-gray-500">
-                        {ing.chunk_count ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-gray-500">
-                        {formatDate(ing.created_at)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <button
-                          onClick={() => {
-                            if (confirm(`Delete "${sourceLabel(ing)}"?`)) {
-                              deleteMutation.mutate(ing.id);
-                            }
-                          }}
-                          disabled={deleteMutation.isPending}
-                          className="rounded p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
+      {data && data.length > 0 && (
+        <div className="bp-card" style={{ overflow: "hidden" }}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Source</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Chunks</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((ing) => {
+                const Icon = SOURCE_ICON[ing.source_type] ?? FileText;
+                return (
+                  <TableRow key={ing.id}>
+                    <TableCell>
+                      <Link
+                        to={`/ingestion/${ing.id}`}
+                        className="bp-link"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500 }}
+                      >
+                        <Icon size={14} style={{ flexShrink: 0, color: "var(--bp-muted)" }} />
+                        <span style={{ maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sourceLabel(ing)}</span>
+                      </Link>
+                    </TableCell>
+                    <TableCell style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: "var(--bp-muted)" }}>
+                      {ing.source_type}
+                    </TableCell>
+                    <TableCell><StatusBadge status={ing.status} /></TableCell>
+                    <TableCell style={{ fontSize: 13, color: "var(--bp-muted)" }}>{ing.chunk_count ?? "—"}</TableCell>
+                    <TableCell style={{ fontSize: 13, color: "var(--bp-muted)" }}>{formatDate(ing.created_at)}</TableCell>
+                    <TableCell style={{ textAlign: "right" }}>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Delete "${sourceLabel(ing)}"?`)) {
+                            deleteMutation.mutate(ing.id);
+                          }
+                        }}
+                        disabled={deleteMutation.isPending}
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "var(--bp-muted)", display: "inline-flex", alignItems: "center", borderRadius: 6 }}
+                        title="Delete"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }

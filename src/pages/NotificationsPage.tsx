@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
 
 interface Notification {
   id: string;
@@ -50,37 +49,32 @@ function NotificationRow({
   const isUnread = notification.read_at === null;
 
   return (
-    <div
-      className={[
-        "flex items-start gap-3 px-4 py-3 border-b border-gray-100 last:border-0",
-        isUnread ? "bg-amber-50" : "bg-white",
-      ].join(" ")}
-    >
-      {isUnread && (
-        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-amber" />
-      )}
-      {!isUnread && <span className="mt-1.5 h-2 w-2 shrink-0" />}
-
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+    <div style={{
+      display: "flex", alignItems: "flex-start", gap: 10,
+      padding: "10px 14px",
+      borderBottom: "1px solid var(--bp-border)",
+      background: isUnread ? "color-mix(in oklab, var(--bp-accent) 6%, var(--bp-panel))" : "var(--bp-panel)",
+    }}>
+      <span style={{ marginTop: 6, width: 8, height: 8, flexShrink: 0, borderRadius: "50%", background: isUnread ? "var(--bp-accent)" : "transparent" }} />
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".04em", color: "var(--bp-muted)" }}>
             {KIND_LABEL[notification.kind] ?? notification.kind}
           </span>
-          <span className="text-xs text-gray-400">{formatDate(notification.created_at)}</span>
+          <span style={{ fontSize: 11, color: "var(--bp-muted)" }}>{formatDate(notification.created_at)}</span>
         </div>
-        <p className="text-sm text-gray-800">{notification.message}</p>
+        <p style={{ fontSize: 13, color: "var(--bp-ink)" }}>{notification.message}</p>
         {link && (
-          <Link to={link} className="mt-1 inline-block text-xs text-brand-amber hover:underline">
+          <Link to={link} className="bp-link" style={{ marginTop: 4, display: "inline-block", fontSize: 12 }}>
             View {notification.entity_type} →
           </Link>
         )}
       </div>
-
       {isUnread && (
         <button
           type="button"
           onClick={() => onRead(notification.id)}
-          className="shrink-0 text-xs text-gray-400 hover:text-gray-600"
+          style={{ flexShrink: 0, fontSize: 12, color: "var(--bp-muted)", background: "none", border: "none", cursor: "pointer" }}
         >
           Mark read
         </button>
@@ -110,42 +104,36 @@ export function NotificationsPage() {
   const unreadCount = notifications?.filter((n) => n.read_at === null).length ?? 0;
 
   return (
-    <div className="p-8 max-w-2xl">
-      <div className="flex items-start justify-between mb-6">
+    <div className="bp-page" style={{ maxWidth: 620 }}>
+      <div className="bp-page__head">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-          {unreadCount > 0 && (
-            <p className="mt-1 text-sm text-gray-500">{unreadCount} unread</p>
-          )}
+          <h1>Notifications</h1>
+          {unreadCount > 0 && <p className="bp-page__sub">{unreadCount} unread</p>}
         </div>
         {unreadCount > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            type="button"
+            className="bp-btn bp-btn--ghost"
+            style={{ fontSize: 12, padding: "4px 12px" }}
             onClick={() => readAllMutation.mutate()}
             disabled={readAllMutation.isPending}
           >
             {readAllMutation.isPending ? "Marking…" : "Mark all read"}
-          </Button>
+          </button>
         )}
       </div>
 
-      {isLoading && (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-amber border-t-transparent" />
-          Loading…
-        </div>
-      )}
+      {isLoading && <p className="bp-muted" style={{ fontSize: 13 }}>Loading…</p>}
 
       {!isLoading && (!notifications || notifications.length === 0) && (
-        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-          <Bell className="h-8 w-8 mb-3" />
-          <p className="text-sm">No notifications yet.</p>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "64px 0", color: "var(--bp-muted)" }}>
+          <Bell size={32} style={{ marginBottom: 12 }} />
+          <p style={{ fontSize: 13 }}>No notifications yet.</p>
         </div>
       )}
 
       {notifications && notifications.length > 0 && (
-        <div className="rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bp-card" style={{ overflow: "hidden", padding: 0 }}>
           {notifications.map((n) => (
             <NotificationRow
               key={n.id}

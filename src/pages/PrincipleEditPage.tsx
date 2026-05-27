@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { TagInput } from "@/components/TagInput";
 
 interface PrincipleDetail {
   id: string;
@@ -19,55 +19,6 @@ interface PrincipleDetail {
   analogies: string | null;
   domain: string;
   tags: string[];
-}
-
-function TagInput({
-  label,
-  values,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  values: string[];
-  onChange: (next: string[]) => void;
-  placeholder?: string;
-}) {
-  const [draft, setDraft] = useState("");
-
-  function add() {
-    const trimmed = draft.trim();
-    if (trimmed && !values.includes(trimmed)) onChange([...values, trimmed]);
-    setDraft("");
-  }
-
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <div className="flex gap-2">
-        <Input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
-          placeholder={placeholder ?? "Type and press Enter"}
-        />
-        <Button type="button" variant="outline" onClick={add} disabled={!draft.trim()}>
-          Add
-        </Button>
-      </div>
-      {values.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pt-1">
-          {values.map((v) => (
-            <span key={v} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700">
-              {v}
-              <button type="button" onClick={() => onChange(values.filter((x) => x !== v))} className="text-gray-400 hover:text-gray-600">
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 export function PrincipleEditPage() {
@@ -121,19 +72,18 @@ export function PrincipleEditPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8 flex items-center gap-2 text-sm text-gray-500">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-amber border-t-transparent" />
-        Loading principle…
+      <div className="bp-page">
+        <p className="bp-muted" style={{ fontSize: 13 }}>Loading principle…</p>
       </div>
     );
   }
 
   if (error || !principle) {
     return (
-      <div className="p-8">
-        <p className="text-sm text-red-600">Principle not found.</p>
-        <Link to="/principles" className="mt-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
-          <ArrowLeft className="h-4 w-4" /> Back to principles
+      <div className="bp-page">
+        <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>Principle not found.</p>
+        <Link to="/principles" className="bp-link" style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={14} /> Back to principles
         </Link>
       </div>
     );
@@ -146,62 +96,70 @@ export function PrincipleEditPage() {
       : null;
 
   return (
-    <div className="p-8 max-w-2xl">
-      <Link
-        to={`/principles/${principle.id}`}
-        className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-6"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to principle
-      </Link>
+    <div className="bp-page" style={{ maxWidth: 620 }}>
+      <div className="bp-crumbs">
+        <Link to={`/principles/${principle.id}`} className="bp-link" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={12} /> Back to principle
+        </Link>
+      </div>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Edit principle</h1>
-      <p className="text-sm text-gray-400 mb-8">v{principle.version} · {principle.status}</p>
+      <div className="bp-page__head">
+        <div>
+          <h1>Edit principle</h1>
+          <p className="bp-page__sub">v{principle.version} · {principle.status}</p>
+        </div>
+      </div>
 
       <form
         onSubmit={(e) => { e.preventDefault(); if (canSave) saveMutation.mutate(); }}
-        className="space-y-6"
+        style={{ display: "flex", flexDirection: "column", gap: 14 }}
       >
-        <div className="space-y-1.5">
-          <Label htmlFor="title">Title <span className="text-red-500">*</span></Label>
-          <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Name of the principle" />
-        </div>
+        <section className="bp-card" style={{ padding: 18 }}>
+          <div className="bp-section-head"><h3>Details</h3></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div>
+              <Label htmlFor="title">Title <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
+              <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Name of the principle" />
+            </div>
+            <div>
+              <Label htmlFor="domain">Domain <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
+              <Input id="domain" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. linux-sysadmin" />
+            </div>
+          </div>
+        </section>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="domain">Domain <span className="text-red-500">*</span></Label>
-          <Input id="domain" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. linux-sysadmin" />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="summary">Summary <span className="text-red-500">*</span></Label>
-          <Textarea id="summary" value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="One or two sentences capturing the core idea" rows={2} />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="explanation">Explanation <span className="text-red-500">*</span></Label>
-          <Textarea id="explanation" value={explanation} onChange={(e) => setExplanation(e.target.value)} placeholder="Full explanation of the principle" rows={6} />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="analogies">Analogies <span className="text-gray-400 font-normal">(optional)</span></Label>
-          <Textarea id="analogies" value={analogies} onChange={(e) => setAnalogies(e.target.value)} placeholder="Real-world analogies or examples" rows={3} />
-        </div>
-
-        <TagInput label="Tags" values={tags} onChange={setTags} placeholder="Tag — press Enter" />
+        <section className="bp-card" style={{ padding: 18 }}>
+          <div className="bp-section-head"><h3>Content</h3></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div>
+              <Label htmlFor="summary">Summary <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
+              <Textarea id="summary" value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="One or two sentences capturing the core idea" rows={2} />
+            </div>
+            <div>
+              <Label htmlFor="explanation">Explanation <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
+              <Textarea id="explanation" value={explanation} onChange={(e) => setExplanation(e.target.value)} placeholder="Full explanation of the principle" rows={6} />
+            </div>
+            <div>
+              <Label htmlFor="analogies">Analogies <span style={{ fontSize: 11, color: "var(--bp-muted)", fontWeight: 400 }}>(optional)</span></Label>
+              <Textarea id="analogies" value={analogies} onChange={(e) => setAnalogies(e.target.value)} placeholder="Real-world analogies or examples" rows={3} />
+            </div>
+            <TagInput label="Tags" values={tags} onChange={setTags} placeholder="Tag — press Enter" />
+          </div>
+        </section>
 
         {saveError && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+          <div style={{ fontSize: 13, color: "var(--bp-danger)", background: "color-mix(in oklab, var(--bp-danger) 8%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-danger) 25%, var(--bp-border))", borderRadius: 12, padding: "10px 14px" }}>
             {saveError}
           </div>
         )}
 
-        <div className="flex items-center gap-3 pt-2">
-          <Button type="submit" disabled={!canSave || saveMutation.isPending}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button type="submit" className="bp-btn bp-btn--secondary" disabled={!canSave || saveMutation.isPending}>
             {saveMutation.isPending ? "Saving…" : "Save changes"}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => navigate(`/principles/${principle.id}`)}>
+          </button>
+          <button type="button" className="bp-btn bp-btn--ghost" onClick={() => navigate(`/principles/${principle.id}`)}>
             Cancel
-          </Button>
+          </button>
         </div>
       </form>
     </div>

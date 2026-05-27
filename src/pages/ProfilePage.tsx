@@ -20,44 +20,35 @@ export function ProfilePage() {
   });
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-      <p className="mt-1 text-sm text-gray-500">Your account details.</p>
+    <div className="bp-page" style={{ maxWidth: 560 }}>
+      <div className="bp-page__head">
+        <div>
+          <h1>Profile</h1>
+          <p className="bp-page__sub">Your account details.</p>
+        </div>
+      </div>
 
-      <div className="mt-8 max-w-lg space-y-6">
-        {/* OIDC identity */}
-        <section>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400">
-            Identity
-          </h2>
-          <dl className="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white">
-            <Row label="Name" value={user?.profile.name} />
-            <Row label="Email" value={user?.profile.email} />
-          </dl>
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <section className="bp-card" style={{ padding: 0, overflow: "hidden" }}>
+          <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--bp-border)" }}>
+            <h3 style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--bp-muted)" }}>Identity</h3>
+          </div>
+          <Row label="Name" value={user?.profile.name} />
+          <Row label="Email" value={user?.profile.email} />
         </section>
 
-        {/* Platform account */}
-        <section>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400">
-            Platform account
-          </h2>
-          {isLoading && (
-            <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-amber border-t-transparent" />
-              Loading…
-            </div>
-          )}
-          {error && (
-            <p className="mt-3 text-sm text-red-600">
-              Failed to load profile from API.
-            </p>
-          )}
+        <section className="bp-card" style={{ padding: 0, overflow: "hidden" }}>
+          <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--bp-border)" }}>
+            <h3 style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--bp-muted)" }}>Platform account</h3>
+          </div>
+          {isLoading && <p className="bp-muted" style={{ fontSize: 13, padding: "12px 16px" }}>Loading…</p>}
+          {error && <p style={{ fontSize: 13, color: "var(--bp-danger)", padding: "12px 16px" }}>Failed to load profile from API.</p>}
           {data && (
-            <dl className="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white">
+            <>
               <Row label="Display name" value={data.display_name ?? "—"} />
               <Row label="Roles" value={data.roles.join(", ") || "none"} />
               <Row label="Member since" value={formatDate(data.created_at)} />
-            </dl>
+            </>
           )}
         </section>
       </div>
@@ -67,9 +58,9 @@ export function ProfilePage() {
 
 function Row({ label, value }: { label: string; value: string | undefined }) {
   return (
-    <div className="flex justify-between px-4 py-3">
-      <dt className="text-sm text-gray-500">{label}</dt>
-      <dd className="text-sm font-medium text-gray-900">{value ?? "—"}</dd>
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: "1px solid var(--bp-border)" }}>
+      <dt style={{ fontSize: 13, color: "var(--bp-muted)" }}>{label}</dt>
+      <dd style={{ fontSize: 13, fontWeight: 500, color: "var(--bp-ink)" }}>{value ?? "—"}</dd>
     </div>
   );
 }

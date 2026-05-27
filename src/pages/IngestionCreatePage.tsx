@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, FileText, Globe, Code } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
 
 interface IngestionResponse {
   id: string;
@@ -60,21 +59,21 @@ function PdfForm({ onSuccess }: { onSuccess: (id: string) => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">PDF file</label>
+        <label className="bp-label">PDF file</label>
         <input
           ref={inputRef}
           type="file"
           accept=".pdf,application/pdf"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+          style={{ display: "block", width: "100%", fontSize: 13, color: "var(--bp-muted)" }}
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={!file || isPending}>
+      {error && <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>{error}</p>}
+      <button type="submit" className="bp-btn bp-btn--secondary" disabled={!file || isPending} style={{ alignSelf: "flex-start" }}>
         {isPending ? "Uploading…" : "Upload PDF"}
-      </Button>
+      </button>
     </form>
   );
 }
@@ -106,51 +105,48 @@ function HtmlForm({ onSuccess }: { onSuccess: (id: string) => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">URL</label>
+        <label className="bp-label">URL</label>
         <input
           type="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://example.com/docs"
-          className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-amber focus:outline-none focus:ring-1 focus:ring-brand-amber"
+          className="bp-input"
         />
       </div>
-
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Mode</label>
-        <div className="flex gap-4">
+        <label className="bp-label" style={{ marginBottom: 8 }}>Mode</label>
+        <div style={{ display: "flex", gap: 16 }}>
           {(["single", "site-nav"] as const).map((m) => (
-            <label key={m} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <label key={m} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--bp-ink)", cursor: "pointer" }}>
               <input
                 type="radio"
                 name="mode"
                 value={m}
                 checked={mode === m}
                 onChange={() => setMode(m)}
-                className="accent-brand-amber"
+                style={{ accentColor: "var(--bp-accent)" }}
               />
               {m === "single" ? "Single page" : "Site navigation"}
             </label>
           ))}
         </div>
       </div>
-
-      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--bp-ink)", cursor: "pointer" }}>
         <input
           type="checkbox"
           checked={force}
           onChange={(e) => setForce(e.target.checked)}
-          className="accent-brand-amber"
+          style={{ accentColor: "var(--bp-accent)" }}
         />
         Re-ingest even if URL was previously imported
       </label>
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={!url.trim() || isPending}>
+      {error && <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>{error}</p>}
+      <button type="submit" className="bp-btn bp-btn--secondary" disabled={!url.trim() || isPending} style={{ alignSelf: "flex-start" }}>
         {isPending ? "Starting…" : "Start HTML import"}
-      </Button>
+      </button>
     </form>
   );
 }
@@ -202,32 +198,30 @@ function JsonForm({ onSuccess }: { onSuccess: (id: string) => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">JSON file</label>
+        <label className="bp-label">JSON file</label>
         <input
           type="file"
           accept=".json,application/json"
           onChange={handleFileChange}
-          className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+          style={{ display: "block", width: "100%", fontSize: 13, color: "var(--bp-muted)" }}
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Or paste JSON
-        </label>
+        <label className="bp-label">Or paste JSON</label>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={10}
           placeholder='{ "schema_version": "1.0", "items": [...] }'
-          className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono focus:border-brand-amber focus:outline-none focus:ring-1 focus:ring-brand-amber"
+          style={{ display: "block", width: "100%", boxSizing: "border-box", borderRadius: 8, border: "1px solid var(--bp-border)", background: "var(--bp-panel)", color: "var(--bp-ink)", fontSize: 12, fontFamily: "ui-monospace, monospace", padding: "7px 10px", outline: "none" }}
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={!text.trim() || isPending}>
+      {error && <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>{error}</p>}
+      <button type="submit" className="bp-btn bp-btn--secondary" disabled={!text.trim() || isPending} style={{ alignSelf: "flex-start" }}>
         {isPending ? "Importing…" : "Import JSON"}
-      </Button>
+      </button>
     </form>
   );
 }
@@ -251,39 +245,44 @@ export function IngestionCreatePage() {
   }
 
   return (
-    <div className="p-8 max-w-2xl">
-      <Link
-        to="/ingestion"
-        className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-6"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Ingestion
-      </Link>
+    <div className="bp-page" style={{ maxWidth: 620 }}>
+      <div className="bp-crumbs">
+        <Link to="/ingestion" className="bp-link" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={12} /> Ingestion
+        </Link>
+      </div>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">New import</h1>
-      <p className="text-sm text-gray-500 mb-8">Choose a source type and provide the details below.</p>
+      <div className="bp-page__head">
+        <div>
+          <h1>New import</h1>
+          <p className="bp-page__sub">Choose a source type and provide the details below.</p>
+        </div>
+      </div>
 
       {/* Tab bar */}
-      <div className="flex border-b border-gray-200 mb-8">
+      <div style={{ display: "flex", borderBottom: "1px solid var(--bp-border)", marginBottom: 20 }}>
         {TABS.map(({ key, label, Icon }) => (
           <button
             key={key}
             type="button"
             onClick={() => setActiveTab(key)}
-            className={[
-              "flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
-              activeTab === key
-                ? "border-brand-amber text-brand-amber"
-                : "border-transparent text-gray-500 hover:text-gray-700",
-            ].join(" ")}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "8px 14px", fontSize: 13, fontWeight: 500,
+              marginBottom: -1,
+              color: activeTab === key ? "var(--bp-accent-deep)" : "var(--bp-muted)",
+              background: "none", border: "none",
+              borderBottom: activeTab === key ? "2px solid var(--bp-accent)" : "2px solid transparent",
+              cursor: "pointer", transition: "color .15s ease",
+            }}
           >
-            <Icon className="h-4 w-4" />
+            <Icon size={14} />
             {label}
           </button>
         ))}
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bp-card" style={{ padding: 20 }}>
         {activeTab === "pdf" && <PdfForm onSuccess={onSuccess} />}
         {activeTab === "html" && <HtmlForm onSuccess={onSuccess} />}
         {activeTab === "json" && <JsonForm onSuccess={onSuccess} />}

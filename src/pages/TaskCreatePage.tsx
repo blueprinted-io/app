@@ -3,11 +3,10 @@ import { useNavigate, Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Trash2, X } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TagInput } from "@/components/TagInput";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -40,75 +39,13 @@ function emptyStep(): StepDraft {
 }
 
 // ---------------------------------------------------------------------------
-// Tag input — type a value and press Enter to add, click × to remove
-// ---------------------------------------------------------------------------
-
-function TagInput({
-  label,
-  values,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  values: string[];
-  onChange: (next: string[]) => void;
-  placeholder?: string;
-}) {
-  const [draft, setDraft] = useState("");
-
-  function add() {
-    const trimmed = draft.trim();
-    if (trimmed && !values.includes(trimmed)) {
-      onChange([...values, trimmed]);
-    }
-    setDraft("");
-  }
-
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <div className="flex gap-2">
-        <Input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              add();
-            }
-          }}
-          placeholder={placeholder ?? "Type and press Enter"}
-        />
-        <Button type="button" variant="outline" onClick={add} disabled={!draft.trim()}>
-          Add
-        </Button>
-      </div>
-      {values.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pt-1">
-          {values.map((v) => (
-            <span
-              key={v}
-              className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700"
-            >
-              {v}
-              <button
-                type="button"
-                onClick={() => onChange(values.filter((x) => x !== v))}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Step editor
 // ---------------------------------------------------------------------------
+
+const subLabelStyle: React.CSSProperties = {
+  fontSize: 10, fontWeight: 800, letterSpacing: ".06em",
+  textTransform: "uppercase", color: "var(--bp-muted)", marginBottom: 4,
+};
 
 function StepEditor({
   step,
@@ -136,24 +73,20 @@ function StepEditor({
   }
 
   return (
-    <Card className="border-gray-200">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-gray-700">
-            Step {index + 1}
-          </CardTitle>
-          <button
-            type="button"
-            onClick={onRemove}
-            className="text-gray-300 hover:text-red-400 transition-colors"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-1.5">
-          <Label>What is being done <span className="text-red-500">*</span></Label>
+    <div className="bp-card" style={{ padding: "14px 16px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--bp-muted)" }}>Step {index + 1}</span>
+        <button
+          type="button"
+          onClick={onRemove}
+          style={{ background: "none", border: "none", cursor: "pointer", color: "var(--bp-muted)", display: "inline-flex", alignItems: "center", padding: 2 }}
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div>
+          <p style={subLabelStyle}>What is being done <span style={{ color: "var(--bp-danger)" }}>*</span></p>
           <Textarea
             value={step.step}
             onChange={(e) => onChange({ ...step, step: e.target.value })}
@@ -162,11 +95,11 @@ function StepEditor({
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label>Actions</Label>
-          <div className="space-y-2">
+        <div>
+          <p style={subLabelStyle}>Actions</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {step.actions.map((action, i) => (
-              <div key={i} className="flex gap-2">
+              <div key={i} style={{ display: "flex", gap: 6, alignItems: "center" }}>
                 <Input
                   value={action}
                   onChange={(e) => updateAction(i, e.target.value)}
@@ -176,9 +109,9 @@ function StepEditor({
                   <button
                     type="button"
                     onClick={() => removeAction(i)}
-                    className="text-gray-300 hover:text-red-400 transition-colors"
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--bp-muted)", display: "inline-flex", alignItems: "center", flexShrink: 0 }}
                   >
-                    <X className="h-4 w-4" />
+                    <X size={14} />
                   </button>
                 )}
               </div>
@@ -187,14 +120,14 @@ function StepEditor({
           <button
             type="button"
             onClick={addAction}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mt-1"
+            style={{ marginTop: 6, display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--bp-muted)", background: "none", border: "none", cursor: "pointer" }}
           >
-            <Plus className="h-3 w-3" /> Add action
+            <Plus size={12} /> Add action
           </button>
         </div>
 
-        <div className="space-y-1.5">
-          <Label>Completion criterion <span className="text-red-500">*</span></Label>
+        <div>
+          <p style={subLabelStyle}>Completion criterion <span style={{ color: "var(--bp-danger)" }}>*</span></p>
           <Textarea
             value={step.completion}
             onChange={(e) => onChange({ ...step, completion: e.target.value })}
@@ -203,8 +136,8 @@ function StepEditor({
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label>Notes <span className="text-gray-400 font-normal">(optional)</span></Label>
+        <div>
+          <p style={subLabelStyle}>Notes <span style={{ fontWeight: 400, color: "var(--bp-muted)" }}>(optional)</span></p>
           <Textarea
             value={step.notes}
             onChange={(e) => onChange({ ...step, notes: e.target.value })}
@@ -213,17 +146,17 @@ function StepEditor({
           />
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--bp-ink)", cursor: "pointer" }}>
           <input
             type="checkbox"
             checked={step.irreversible}
             onChange={(e) => onChange({ ...step, irreversible: e.target.checked })}
-            className="h-4 w-4 rounded border-gray-300 text-brand-amber"
+            style={{ accentColor: "var(--bp-accent)", width: 14, height: 14 }}
           />
           This step is irreversible
         </label>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -235,19 +168,14 @@ export function TaskCreatePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Core fields
   const [title, setTitle] = useState("");
   const [outcome, setOutcome] = useState("");
   const [domain, setDomain] = useState("");
   const [softwareName, setSoftwareName] = useState("");
   const [softwareVersion, setSoftwareVersion] = useState("");
-
-  // Array fields
   const [facts, setFacts] = useState<string[]>([]);
   const [concepts, setConcepts] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
-
-  // Steps
   const [steps, setSteps] = useState<StepDraft[]>([]);
 
   function updateStep(index: number, next: StepDraft) {
@@ -260,7 +188,6 @@ export function TaskCreatePage() {
 
   const mutation = useMutation({
     mutationFn: async ({ submitAfter }: { submitAfter: boolean }) => {
-      // 1. Create the task
       const task = await api.post<TaskResponse>("/tasks", {
         title,
         outcome,
@@ -272,7 +199,6 @@ export function TaskCreatePage() {
         tags,
       });
 
-      // 2. Add steps in order
       for (const s of steps) {
         if (!s.step.trim() || !s.completion.trim()) continue;
         await api.post(`/tasks/${task.id}/steps`, {
@@ -286,11 +212,7 @@ export function TaskCreatePage() {
         });
       }
 
-      // 3. Submit if requested
-      if (submitAfter) {
-        await api.post(`/tasks/${task.id}/submit`);
-      }
-
+      if (submitAfter) await api.post(`/tasks/${task.id}/submit`);
       return task;
     },
     onSuccess: (task) => {
@@ -310,139 +232,80 @@ export function TaskCreatePage() {
         : null;
 
   return (
-    <div className="p-8 max-w-3xl">
-      <div className="mb-6">
-        <Link
-          to="/tasks"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Tasks
+    <div className="bp-page" style={{ maxWidth: 720 }}>
+      <div className="bp-crumbs">
+        <Link to="/tasks" className="bp-link" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={12} /> Tasks
         </Link>
-        <h1 className="mt-3 text-2xl font-bold text-gray-900">New task</h1>
+      </div>
+
+      <div className="bp-page__head">
+        <div>
+          <h1>New task</h1>
+        </div>
       </div>
 
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          mutation.mutate({ submitAfter: false });
-        }}
-        className="space-y-8"
+        onSubmit={(e) => { e.preventDefault(); mutation.mutate({ submitAfter: false }); }}
+        style={{ display: "flex", flexDirection: "column", gap: 14 }}
       >
         {/* Core fields */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="title">
-                Title <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="What does this task do?"
-                required
-              />
+        <section className="bp-card" style={{ padding: 18 }}>
+          <div className="bp-section-head"><h3>Details</h3></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div>
+              <Label htmlFor="title">Title <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
+              <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What does this task do?" required />
             </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="outcome">
-                Outcome <span className="text-red-500">*</span>
-              </Label>
-              <Textarea
-                id="outcome"
-                value={outcome}
-                onChange={(e) => setOutcome(e.target.value)}
-                placeholder="What is the end state when this task is complete?"
-                rows={3}
-                required
-              />
+            <div>
+              <Label htmlFor="outcome">Outcome <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
+              <Textarea id="outcome" value={outcome} onChange={(e) => setOutcome(e.target.value)} placeholder="What is the end state when this task is complete?" rows={3} required />
             </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="domain">
-                Domain <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="domain"
-                value={domain}
-                onChange={(e) => setDomain(e.target.value)}
-                placeholder="e.g. linux-sysadmin"
-                required
-              />
+            <div>
+              <Label htmlFor="domain">Domain <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
+              <Input id="domain" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. linux-sysadmin" required />
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div>
                 <Label htmlFor="software-name">Software</Label>
-                <Input
-                  id="software-name"
-                  value={softwareName}
-                  onChange={(e) => setSoftwareName(e.target.value)}
-                  placeholder="e.g. nginx"
-                />
+                <Input id="software-name" value={softwareName} onChange={(e) => setSoftwareName(e.target.value)} placeholder="e.g. nginx" />
               </div>
-              <div className="space-y-1.5">
+              <div>
                 <Label htmlFor="software-version">Version</Label>
-                <Input
-                  id="software-version"
-                  value={softwareVersion}
-                  onChange={(e) => setSoftwareVersion(e.target.value)}
-                  placeholder="e.g. 1.25"
-                />
+                <Input id="software-version" value={softwareVersion} onChange={(e) => setSoftwareVersion(e.target.value)} placeholder="e.g. 1.25" />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
 
-        {/* Facts, concepts, tags */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Knowledge</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <TagInput
-              label="Facts"
-              values={facts}
-              onChange={setFacts}
-              placeholder="An atomic statement of truth — press Enter to add"
-            />
-            <TagInput
-              label="Concepts"
-              values={concepts}
-              onChange={setConcepts}
-              placeholder="Contextual knowledge explaining why this task exists"
-            />
-            <TagInput
-              label="Tags"
-              values={tags}
-              onChange={setTags}
-              placeholder="e.g. security, networking"
-            />
-          </CardContent>
-        </Card>
+        {/* Knowledge */}
+        <section className="bp-card" style={{ padding: 18 }}>
+          <div className="bp-section-head"><h3>Knowledge</h3></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <TagInput label="Facts" values={facts} onChange={setFacts} placeholder="An atomic statement of truth — press Enter to add" />
+            <TagInput label="Concepts" values={concepts} onChange={setConcepts} placeholder="Contextual knowledge explaining why this task exists" />
+            <TagInput label="Tags" values={tags} onChange={setTags} placeholder="e.g. security, networking" />
+          </div>
+        </section>
 
-        {/* Steps */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-900">Procedure</h2>
+        {/* Procedure */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 4px" }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--bp-ink)" }}>Procedure</span>
             <button
               type="button"
               onClick={() => setSteps((prev) => [...prev, emptyStep()])}
-              className="inline-flex items-center gap-1.5 text-sm text-brand-amber hover:text-amber-600 font-medium"
+              className="bp-btn bp-btn--ghost"
+              style={{ fontSize: 12 }}
             >
-              <Plus className="h-4 w-4" />
-              Add step
+              <Plus size={12} /> Add step
             </button>
           </div>
 
           {steps.length === 0 && (
-            <p className="text-sm text-gray-400 py-4 text-center border border-dashed border-gray-200 rounded-lg">
-              No steps yet. Steps can be added now or after saving.
-            </p>
+            <div style={{ padding: "24px", textAlign: "center", border: "1px dashed var(--bp-border)", borderRadius: 12 }}>
+              <p className="bp-muted" style={{ fontSize: 13 }}>No steps yet. Steps can be added now or after saving.</p>
+            </div>
           )}
 
           {steps.map((step, i) => (
@@ -456,29 +319,25 @@ export function TaskCreatePage() {
           ))}
         </div>
 
-        {/* Error */}
         {errorMessage && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+          <div style={{ fontSize: 13, color: "var(--bp-danger)", background: "color-mix(in oklab, var(--bp-danger) 8%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-danger) 25%, var(--bp-border))", borderRadius: 12, padding: "10px 14px" }}>
             {errorMessage}
-          </p>
+          </div>
         )}
 
-        {/* Actions */}
-        <div className="flex items-center gap-3 pt-2">
-          <Button type="submit" variant="outline" disabled={!isValid || isPending}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button type="submit" className="bp-btn bp-btn--ghost" disabled={!isValid || isPending}>
             {isPending ? "Saving…" : "Save as draft"}
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
+            className="bp-btn bp-btn--secondary"
             disabled={!isValid || isPending}
             onClick={() => mutation.mutate({ submitAfter: true })}
           >
             {isPending ? "Saving…" : "Save and submit"}
-          </Button>
-          <Link
-            to="/tasks"
-            className="ml-auto text-sm text-gray-400 hover:text-gray-600"
-          >
+          </button>
+          <Link to="/tasks" className="bp-link" style={{ marginLeft: "auto", fontSize: 13 }}>
             Cancel
           </Link>
         </div>

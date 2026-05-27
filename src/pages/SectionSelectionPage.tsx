@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
-import { Button } from "@/components/ui/button";
 
 interface IngestionChunk {
   id: string;
@@ -62,20 +61,19 @@ export function SectionSelectionPage() {
     }
   }
 
-  function toggle(id: string) {
+  function toggle(chunkId: string) {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(chunkId)) next.delete(chunkId);
+      else next.add(chunkId);
       return next;
     });
   }
 
   if (isLoading || !ingestion) {
     return (
-      <div className="p-8 flex items-center gap-2 text-sm text-gray-500">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-amber border-t-transparent" />
-        Loading sections…
+      <div className="bp-page">
+        <p className="bp-muted" style={{ fontSize: 13 }}>Loading sections…</p>
       </div>
     );
   }
@@ -85,110 +83,109 @@ export function SectionSelectionPage() {
   const allSelected = selected.size === pendingChunks.length && pendingChunks.length > 0;
 
   return (
-    <div className="p-8 max-w-3xl">
-      <Link
-        to={`/ingestion/${id}`}
-        className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-6"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to ingestion
-      </Link>
+    <div className="bp-page" style={{ maxWidth: 720 }}>
+      <div className="bp-crumbs">
+        <Link to={`/ingestion/${id}`} className="bp-link" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={12} /> Back to ingestion
+        </Link>
+      </div>
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Select sections</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Choose which sections to send for extraction. Selected sections will be queued for LLM processing.
-        </p>
+      <div className="bp-page__head">
+        <div>
+          <h1>Select sections</h1>
+          <p className="bp-page__sub">Choose which sections to send for extraction. Selected sections will be queued for LLM processing.</p>
+        </div>
       </div>
 
       {error && (
-        <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+        <div style={{ marginBottom: 16, fontSize: 13, color: "var(--bp-danger)", background: "color-mix(in oklab, var(--bp-danger) 8%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-danger) 25%, var(--bp-border))", borderRadius: 12, padding: "10px 14px" }}>
           {error}
         </div>
       )}
 
       {pendingChunks.length === 0 ? (
-        <p className="text-sm text-gray-500">No pending sections. All sections have already been queued or processed.</p>
+        <p className="bp-muted" style={{ fontSize: 13 }}>No pending sections. All sections have already been queued or processed.</p>
       ) : (
         <>
-          <div className="mb-4 flex items-center gap-3">
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--bp-ink)", cursor: "pointer" }}>
               <input
                 type="checkbox"
                 checked={allSelected}
                 onChange={toggleAll}
-                className="accent-brand-amber"
+                style={{ accentColor: "var(--bp-accent)" }}
               />
               Select all ({pendingChunks.length})
             </label>
-            <span className="text-sm text-gray-400">{selected.size} selected</span>
+            <span className="bp-muted" style={{ fontSize: 13 }}>{selected.size} selected</span>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-white divide-y divide-gray-100 mb-6">
+          <div className="bp-card" style={{ padding: 0, overflow: "hidden", marginBottom: 16 }}>
             {pendingChunks
               .slice()
               .sort((a, b) => a.chunk_index - b.chunk_index)
               .map((chunk) => (
                 <label
                   key={chunk.id}
-                  className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50"
+                  style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 16px", borderBottom: "1px solid var(--bp-border)", cursor: "pointer" }}
                 >
                   <input
                     type="checkbox"
                     checked={selected.has(chunk.id)}
                     onChange={() => toggle(chunk.id)}
-                    className="mt-0.5 accent-brand-amber shrink-0"
+                    style={{ marginTop: 2, accentColor: "var(--bp-accent)", flexShrink: 0 }}
                   />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-sm font-medium text-gray-900 truncate">
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: "var(--bp-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {chunk.section_title ?? `Section ${chunk.chunk_index + 1}`}
                       </span>
                       {chunk.is_scanned && (
-                        <span className="shrink-0 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
+                        <span style={{ flexShrink: 0, fontSize: 11, color: "var(--bp-accent-deep)", background: "color-mix(in oklab, var(--bp-accent) 10%, var(--bp-bg))", border: "1px solid color-mix(in oklab, var(--bp-accent) 30%, var(--bp-border))", borderRadius: 4, padding: "1px 6px" }}>
                           scanned
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11, color: "var(--bp-muted)" }}>
                       <span>{chunk.word_count} words</span>
                       {pageLabel(chunk.pages_json) && <span>{pageLabel(chunk.pages_json)}</span>}
                     </div>
-                    <p className="mt-1 text-xs text-gray-500 line-clamp-2">{chunk.text_preview}</p>
+                    <p style={{ marginTop: 4, fontSize: 11, color: "var(--bp-muted)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{chunk.text_preview}</p>
                   </div>
                 </label>
               ))}
           </div>
 
-          <Button
+          <button
+            type="button"
+            className="bp-btn bp-btn--secondary"
             onClick={() => selectMutation.mutate(Array.from(selected))}
             disabled={selected.size === 0 || selectMutation.isPending}
           >
             {selectMutation.isPending ? "Queueing…" : `Queue ${selected.size} section${selected.size !== 1 ? "s" : ""}`}
-          </Button>
+          </button>
         </>
       )}
 
-      {/* Already processed chunks */}
       {otherChunks.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
+        <div style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--bp-muted)", marginBottom: 10 }}>
             Already processed ({otherChunks.length})
           </h2>
-          <div className="rounded-lg border border-gray-200 bg-white divide-y divide-gray-100">
+          <div className="bp-card" style={{ padding: 0, overflow: "hidden" }}>
             {otherChunks
               .slice()
               .sort((a, b) => a.chunk_index - b.chunk_index)
               .map((chunk) => (
-                <div key={chunk.id} className="flex items-center gap-3 px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <span className="text-sm text-gray-700 truncate">
+                <div key={chunk.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid var(--bp-border)" }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <span style={{ fontSize: 13, color: "var(--bp-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {chunk.section_title ?? `Section ${chunk.chunk_index + 1}`}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-400 shrink-0">
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--bp-muted)", flexShrink: 0 }}>
                     <span>{chunk.candidate_count} candidate{chunk.candidate_count !== 1 ? "s" : ""}</span>
-                    <span className="capitalize">{chunk.chunk_status}</span>
+                    <span style={{ textTransform: "capitalize" }}>{chunk.chunk_status}</span>
                   </div>
                 </div>
               ))}

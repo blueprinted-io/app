@@ -292,3 +292,15 @@
 /* ---- Links ---- */
 .bp-link { color: var(--bp-accent-deep); text-decoration: none; }
 .bp-link:hover { text-decoration: underline; }
+
+/* ---- Form primitives (for raw <input>/<select> outside shadcn) ---- */
+.bp-input {
+  display: block; width: 100%; box-sizing: border-box;
+  padding: 7px 10px; border-radius: 8px;
+  border: 1px solid var(--bp-border); background: var(--bp-panel);
+  color: var(--bp-ink); font-size: 13px; font-family: inherit;
+  outline: none; transition: border-color .15s ease;
+}
+.bp-input:focus { border-color: var(--bp-accent); box-shadow: 0 0 0 2px color-mix(in oklab, var(--bp-accent) 20%, transparent); }
+.bp-label { display: block; font-size: 12px; font-weight: 600; color: var(--bp-ink); margin-bottom: 5px; }
+.bp-form-field { display: flex; flex-direction: column; gap: 5px; }

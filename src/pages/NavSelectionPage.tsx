@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
-import { Button } from "@/components/ui/button";
 
 interface NavPage {
   id: string;
@@ -47,20 +46,19 @@ export function NavSelectionPage() {
     }
   }
 
-  function toggle(id: string) {
+  function toggle(pageId: string) {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(pageId)) next.delete(pageId);
+      else next.add(pageId);
       return next;
     });
   }
 
   if (isLoading || !pages) {
     return (
-      <div className="p-8 flex items-center gap-2 text-sm text-gray-500">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-amber border-t-transparent" />
-        Loading pages…
+      <div className="bp-page">
+        <p className="bp-muted" style={{ fontSize: 13 }}>Loading pages…</p>
       </div>
     );
   }
@@ -69,96 +67,99 @@ export function NavSelectionPage() {
   const allSelected = selected.size === pendingPages.length && pendingPages.length > 0;
 
   return (
-    <div className="p-8 max-w-3xl">
-      <Link
-        to={`/ingestion/${id}`}
-        className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-6"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to ingestion
-      </Link>
+    <div className="bp-page" style={{ maxWidth: 720 }}>
+      <div className="bp-crumbs">
+        <Link to={`/ingestion/${id}`} className="bp-link" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={12} /> Back to ingestion
+        </Link>
+      </div>
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Select pages</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Choose which discovered pages to render and extract sections from.
-        </p>
+      <div className="bp-page__head">
+        <div>
+          <h1>Select pages</h1>
+          <p className="bp-page__sub">Choose which discovered pages to render and extract sections from.</p>
+        </div>
       </div>
 
       {error && (
-        <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+        <div style={{ marginBottom: 16, fontSize: 13, color: "var(--bp-danger)", background: "color-mix(in oklab, var(--bp-danger) 8%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-danger) 25%, var(--bp-border))", borderRadius: 12, padding: "10px 14px" }}>
           {error}
         </div>
       )}
 
       {pendingPages.length === 0 ? (
-        <p className="text-sm text-gray-500">No pending pages to select.</p>
+        <p className="bp-muted" style={{ fontSize: 13 }}>No pending pages to select.</p>
       ) : (
         <>
-          <div className="mb-4 flex items-center gap-3">
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--bp-ink)", cursor: "pointer" }}>
               <input
                 type="checkbox"
                 checked={allSelected}
                 onChange={toggleAll}
-                className="accent-brand-amber"
+                style={{ accentColor: "var(--bp-accent)" }}
               />
               Select all ({pendingPages.length})
             </label>
-            <span className="text-sm text-gray-400">{selected.size} selected</span>
+            <span className="bp-muted" style={{ fontSize: 13 }}>{selected.size} selected</span>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-white divide-y divide-gray-100 mb-6">
+          <div className="bp-card" style={{ padding: 0, overflow: "hidden", marginBottom: 16 }}>
             {pages
               .filter((p) => p.nav_status === "pending")
               .map((page) => (
                 <label
                   key={page.id}
-                  className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50"
-                  style={{ paddingLeft: `${16 + page.nav_level * 16}px` }}
+                  style={{
+                    display: "flex", alignItems: "flex-start", gap: 10,
+                    padding: `10px 16px 10px ${16 + page.nav_level * 16}px`,
+                    borderBottom: "1px solid var(--bp-border)",
+                    cursor: "pointer",
+                  }}
                 >
                   <input
                     type="checkbox"
                     checked={selected.has(page.id)}
                     onChange={() => toggle(page.id)}
-                    className="mt-0.5 accent-brand-amber shrink-0"
+                    style={{ marginTop: 2, accentColor: "var(--bp-accent)", flexShrink: 0 }}
                   />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: "var(--bp-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {page.title ?? page.url}
                     </p>
                     {page.title && (
-                      <p className="text-xs text-gray-400 truncate">{page.url}</p>
+                      <p className="bp-muted" style={{ fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{page.url}</p>
                     )}
                   </div>
                 </label>
               ))}
           </div>
 
-          <Button
+          <button
+            type="button"
+            className="bp-btn bp-btn--secondary"
             onClick={() => selectMutation.mutate(Array.from(selected))}
             disabled={selected.size === 0 || selectMutation.isPending}
           >
             {selectMutation.isPending ? "Queueing…" : `Queue ${selected.size} page${selected.size !== 1 ? "s" : ""}`}
-          </Button>
+          </button>
         </>
       )}
 
-      {/* Already selected pages */}
       {pages.filter((p) => p.nav_status !== "pending").length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
+        <div style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--bp-muted)", marginBottom: 10 }}>
             Already queued
           </h2>
-          <div className="rounded-lg border border-gray-200 bg-white divide-y divide-gray-100">
+          <div className="bp-card" style={{ padding: 0, overflow: "hidden" }}>
             {pages
               .filter((p) => p.nav_status !== "pending")
               .map((page) => (
-                <div key={page.id} className="flex items-center gap-3 px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-700 truncate">{page.title ?? page.url}</p>
+                <div key={page.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: "1px solid var(--bp-border)" }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p style={{ fontSize: 13, color: "var(--bp-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{page.title ?? page.url}</p>
                   </div>
-                  <span className="text-xs text-gray-400 shrink-0 capitalize">{page.nav_status}</span>
+                  <span style={{ fontSize: 11, color: "var(--bp-muted)", flexShrink: 0, textTransform: "capitalize" }}>{page.nav_status}</span>
                 </div>
               ))}
           </div>

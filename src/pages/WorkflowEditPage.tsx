@@ -3,10 +3,10 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, X, Plus } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { TagInput } from "@/components/TagInput";
 import { RefPickerDialog } from "@/components/RefPickerDialog";
 
 interface WorkflowTaskRef {
@@ -43,54 +43,11 @@ interface PrincipleSummary {
   status: string;
 }
 
-function TagInput({
-  label,
-  values,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  values: string[];
-  onChange: (next: string[]) => void;
-  placeholder?: string;
-}) {
-  const [draft, setDraft] = useState("");
-
-  function add() {
-    const trimmed = draft.trim();
-    if (trimmed && !values.includes(trimmed)) onChange([...values, trimmed]);
-    setDraft("");
-  }
-
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <div className="flex gap-2">
-        <Input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
-          placeholder={placeholder ?? "Type and press Enter"}
-        />
-        <Button type="button" variant="outline" onClick={add} disabled={!draft.trim()}>
-          Add
-        </Button>
-      </div>
-      {values.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pt-1">
-          {values.map((v) => (
-            <span key={v} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700">
-              {v}
-              <button type="button" onClick={() => onChange(values.filter((x) => x !== v))} className="text-gray-400 hover:text-gray-600">
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+const refItemStyle: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 8,
+  borderRadius: 8, border: "1px solid var(--bp-border)",
+  background: "var(--bp-bg)", padding: "6px 10px",
+};
 
 export function WorkflowEditPage() {
   const { id } = useParams<{ id: string }>();
@@ -201,19 +158,18 @@ export function WorkflowEditPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8 flex items-center gap-2 text-sm text-gray-500">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-amber border-t-transparent" />
-        Loading workflow…
+      <div className="bp-page">
+        <p className="bp-muted" style={{ fontSize: 13 }}>Loading workflow…</p>
       </div>
     );
   }
 
   if (error || !workflow) {
     return (
-      <div className="p-8">
-        <p className="text-sm text-red-600">Workflow not found.</p>
-        <Link to="/workflows" className="mt-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
-          <ArrowLeft className="h-4 w-4" /> Back to workflows
+      <div className="bp-page">
+        <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>Workflow not found.</p>
+        <Link to="/workflows" className="bp-link" style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={14} /> Back to workflows
         </Link>
       </div>
     );
@@ -230,159 +186,141 @@ export function WorkflowEditPage() {
     .sort((a, b) => a.order_index - b.order_index);
 
   return (
-    <div className="p-8 max-w-2xl">
-      <Link
-        to={`/workflows/${workflow.id}`}
-        className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-6"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to workflow
-      </Link>
+    <div className="bp-page" style={{ maxWidth: 620 }}>
+      <div className="bp-crumbs">
+        <Link to={`/workflows/${workflow.id}`} className="bp-link" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={12} /> Back to workflow
+        </Link>
+      </div>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Edit workflow</h1>
-      <p className="text-sm text-gray-400 mb-8">v{workflow.version} · {workflow.status}</p>
+      <div className="bp-page__head">
+        <div>
+          <h1>Edit workflow</h1>
+          <p className="bp-page__sub">v{workflow.version} · {workflow.status}</p>
+        </div>
+      </div>
 
       <form
         onSubmit={(e) => { e.preventDefault(); if (canSave) saveMutation.mutate(); }}
-        className="space-y-6"
+        style={{ display: "flex", flexDirection: "column", gap: 14 }}
       >
-        <div className="space-y-1.5">
-          <Label htmlFor="title">Title <span className="text-red-500">*</span></Label>
-          <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What does this workflow accomplish?" />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="objective">Objective <span className="text-red-500">*</span></Label>
-          <Textarea id="objective" value={objective} onChange={(e) => setObjective(e.target.value)} placeholder="The goal this workflow is designed to achieve" rows={3} />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="domain">Domain <span className="text-red-500">*</span></Label>
-          <Input id="domain" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. infrastructure" />
-        </div>
-
-        <TagInput label="Tags" values={tags} onChange={setTags} placeholder="Tag — press Enter" />
+        <section className="bp-card" style={{ padding: 18 }}>
+          <div className="bp-section-head"><h3>Details</h3></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div>
+              <Label htmlFor="title">Title <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
+              <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What does this workflow accomplish?" />
+            </div>
+            <div>
+              <Label htmlFor="objective">Objective <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
+              <Textarea id="objective" value={objective} onChange={(e) => setObjective(e.target.value)} placeholder="The goal this workflow is designed to achieve" rows={3} />
+            </div>
+            <div>
+              <Label htmlFor="domain">Domain <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
+              <Input id="domain" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. infrastructure" />
+            </div>
+            <TagInput label="Tags" values={tags} onChange={setTags} placeholder="Tag — press Enter" />
+          </div>
+        </section>
 
         {/* Task refs */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label>Tasks</Label>
+        <section className="bp-card" style={{ padding: 18 }}>
+          <div className="bp-section-head">
+            <h3>Tasks</h3>
             {isDraft && (
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
+                className="bp-btn bp-btn--ghost"
+                style={{ fontSize: 12, padding: "3px 10px" }}
                 onClick={() => setTaskPickerOpen(true)}
                 disabled={anyRefPending || availableTasks.length === 0}
               >
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Add task
-              </Button>
+                <Plus size={11} /> Add task
+              </button>
             )}
           </div>
-
           {sortedTaskRefs.length === 0 ? (
-            <p className="text-sm text-gray-400">No tasks attached.</p>
+            <p className="bp-muted" style={{ fontSize: 13 }}>No tasks attached.</p>
           ) : (
-            <ol className="space-y-1">
+            <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
               {sortedTaskRefs.map((ref) => (
-                <li key={ref.task_record_id} className="flex items-center gap-2 rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
-                  <span className="shrink-0 text-xs text-gray-400 w-4">{ref.order_index + 1}.</span>
-                  <span className="flex-1 text-sm text-gray-800 truncate">
-                    {taskTitleMap.get(ref.task_record_id) ?? (
-                      <span className="font-mono text-xs text-gray-500">{ref.task_record_id}</span>
-                    )}
+                <li key={ref.task_record_id} style={refItemStyle}>
+                  <span style={{ fontSize: 11, color: "var(--bp-muted)", width: 18, flexShrink: 0 }}>{ref.order_index + 1}.</span>
+                  <span style={{ flex: 1, fontSize: 13, color: "var(--bp-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {taskTitleMap.get(ref.task_record_id) ?? <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11 }}>{ref.task_record_id}</span>}
                   </span>
                   {isDraft && (
                     <button
                       type="button"
                       onClick={() => removeTaskRefMutation.mutate(ref.task_record_id)}
                       disabled={anyRefPending}
-                      className="shrink-0 text-gray-400 hover:text-red-500 disabled:opacity-40"
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "var(--bp-muted)", display: "inline-flex", alignItems: "center", flexShrink: 0 }}
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <X size={12} />
                     </button>
                   )}
                 </li>
               ))}
             </ol>
           )}
-
-          <RefPickerDialog
-            open={taskPickerOpen}
-            onOpenChange={setTaskPickerOpen}
-            title="Add task"
-            items={availableTasks}
-            onPick={(id) => addTaskRefMutation.mutate(id)}
-          />
-        </div>
+          <RefPickerDialog open={taskPickerOpen} onOpenChange={setTaskPickerOpen} title="Add task" items={availableTasks} onPick={(id) => addTaskRefMutation.mutate(id)} />
+        </section>
 
         {/* Principle refs */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label>Principles</Label>
+        <section className="bp-card" style={{ padding: 18 }}>
+          <div className="bp-section-head">
+            <h3>Principles</h3>
             {isDraft && (
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
+                className="bp-btn bp-btn--ghost"
+                style={{ fontSize: 12, padding: "3px 10px" }}
                 onClick={() => setPrinciplePickerOpen(true)}
                 disabled={anyRefPending || availablePrinciples.length === 0}
               >
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Add principle
-              </Button>
+                <Plus size={11} /> Add principle
+              </button>
             )}
           </div>
-
           {(workflow.principle_refs ?? []).length === 0 ? (
-            <p className="text-sm text-gray-400">No principles attached.</p>
+            <p className="bp-muted" style={{ fontSize: 13 }}>No principles attached.</p>
           ) : (
-            <ul className="space-y-1">
+            <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
               {(workflow.principle_refs ?? []).map((ref) => (
-                <li key={ref.principle_record_id} className="flex items-center gap-2 rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
-                  <span className="flex-1 text-sm text-gray-800 truncate">
-                    {principleTitleMap.get(ref.principle_record_id) ?? (
-                      <span className="font-mono text-xs text-gray-500">{ref.principle_record_id}</span>
-                    )}
+                <li key={ref.principle_record_id} style={refItemStyle}>
+                  <span style={{ flex: 1, fontSize: 13, color: "var(--bp-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {principleTitleMap.get(ref.principle_record_id) ?? <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 11 }}>{ref.principle_record_id}</span>}
                   </span>
                   {isDraft && (
                     <button
                       type="button"
                       onClick={() => removePrincipleRefMutation.mutate(ref.principle_record_id)}
                       disabled={anyRefPending}
-                      className="shrink-0 text-gray-400 hover:text-red-500 disabled:opacity-40"
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "var(--bp-muted)", display: "inline-flex", alignItems: "center", flexShrink: 0 }}
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <X size={12} />
                     </button>
                   )}
                 </li>
               ))}
             </ul>
           )}
-
-          <RefPickerDialog
-            open={principlePickerOpen}
-            onOpenChange={setPrinciplePickerOpen}
-            title="Add principle"
-            items={availablePrinciples}
-            onPick={(id) => addPrincipleRefMutation.mutate(id)}
-          />
-        </div>
+          <RefPickerDialog open={principlePickerOpen} onOpenChange={setPrinciplePickerOpen} title="Add principle" items={availablePrinciples} onPick={(id) => addPrincipleRefMutation.mutate(id)} />
+        </section>
 
         {saveError && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+          <div style={{ fontSize: 13, color: "var(--bp-danger)", background: "color-mix(in oklab, var(--bp-danger) 8%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-danger) 25%, var(--bp-border))", borderRadius: 12, padding: "10px 14px" }}>
             {saveError}
           </div>
         )}
 
-        <div className="flex items-center gap-3 pt-2">
-          <Button type="submit" disabled={!canSave || saveMutation.isPending}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button type="submit" className="bp-btn bp-btn--secondary" disabled={!canSave || saveMutation.isPending}>
             {saveMutation.isPending ? "Saving…" : "Save changes"}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => navigate(`/workflows/${workflow.id}`)}>
+          </button>
+          <button type="button" className="bp-btn bp-btn--ghost" onClick={() => navigate(`/workflows/${workflow.id}`)}>
             Cancel
-          </Button>
+          </button>
         </div>
       </form>
     </div>

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { TagInput } from "@/components/TagInput";
 
 interface TaskDetail {
   id: string;
@@ -24,61 +24,11 @@ interface TaskDetail {
   tags: string[];
 }
 
-function TagInput({
-  label,
-  values,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  values: string[];
-  onChange: (next: string[]) => void;
-  placeholder?: string;
-}) {
-  const [draft, setDraft] = useState("");
-
-  function add() {
-    const trimmed = draft.trim();
-    if (trimmed && !values.includes(trimmed)) onChange([...values, trimmed]);
-    setDraft("");
-  }
-
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <div className="flex gap-2">
-        <Input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
-          placeholder={placeholder ?? "Type and press Enter"}
-        />
-        <Button type="button" variant="outline" onClick={add} disabled={!draft.trim()}>
-          Add
-        </Button>
-      </div>
-      {values.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pt-1">
-          {values.map((v) => (
-            <span key={v} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700">
-              {v}
-              <button type="button" onClick={() => onChange(values.filter((x) => x !== v))} className="text-gray-400 hover:text-gray-600">
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function TaskEditPage() {
   const { taskId, recordId, version } = useParams<{ taskId?: string; recordId?: string; version?: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Determine which API endpoint to use based on route parameters
   const taskQuery = useQuery({
     queryKey: taskId
       ? ["tasks", "by-id", taskId]
@@ -144,19 +94,18 @@ export function TaskEditPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8 flex items-center gap-2 text-sm text-gray-500">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-amber border-t-transparent" />
-        Loading task…
+      <div className="bp-page">
+        <p className="bp-muted" style={{ fontSize: 13 }}>Loading task…</p>
       </div>
     );
   }
 
   if (error || !task) {
     return (
-      <div className="p-8">
-        <p className="text-sm text-red-600">Task not found.</p>
-        <Link to="/tasks" className="mt-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
-          <ArrowLeft className="h-4 w-4" /> Back to tasks
+      <div className="bp-page">
+        <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>Task not found.</p>
+        <Link to="/tasks" className="bp-link" style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={14} /> Back to tasks
         </Link>
       </div>
     );
@@ -169,70 +118,78 @@ export function TaskEditPage() {
       : null;
 
   return (
-    <div className="p-8 max-w-2xl">
-      <Link
-        to={`/tasks/${task.record_id}/${task.version}`}
-        className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-6"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to task
-      </Link>
+    <div className="bp-page" style={{ maxWidth: 620 }}>
+      <div className="bp-crumbs">
+        <Link to={`/tasks/${task.record_id}/${task.version}`} className="bp-link" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <ArrowLeft size={12} /> Back to task
+        </Link>
+      </div>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Edit task</h1>
-      <p className="text-sm text-gray-400 mb-8">v{task.version} · {task.status} — steps are managed on the task detail page</p>
+      <div className="bp-page__head">
+        <div>
+          <h1>Edit task</h1>
+          <p className="bp-page__sub">v{task.version} · {task.status} — steps are managed on the task detail page</p>
+        </div>
+      </div>
 
       <form
         onSubmit={(e) => { e.preventDefault(); if (canSave) saveMutation.mutate(); }}
-        className="space-y-6"
+        style={{ display: "flex", flexDirection: "column", gap: 14 }}
       >
-        <div className="space-y-1.5">
-          <Label htmlFor="title">Title <span className="text-red-500">*</span></Label>
-          <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Short, specific task title" />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="outcome">Outcome <span className="text-red-500">*</span></Label>
-          <Textarea id="outcome" value={outcome} onChange={(e) => setOutcome(e.target.value)} placeholder="Observable result when the task is complete" rows={3} />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="domain">Domain <span className="text-red-500">*</span></Label>
-          <Input id="domain" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. infrastructure" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="softwareName">Software name</Label>
-            <Input id="softwareName" value={softwareName} onChange={(e) => setSoftwareName(e.target.value)} placeholder="e.g. PostgreSQL" />
+        <section className="bp-card" style={{ padding: 18 }}>
+          <div className="bp-section-head"><h3>Details</h3></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div>
+              <Label htmlFor="title">Title <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
+              <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Short, specific task title" />
+            </div>
+            <div>
+              <Label htmlFor="outcome">Outcome <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
+              <Textarea id="outcome" value={outcome} onChange={(e) => setOutcome(e.target.value)} placeholder="Observable result when the task is complete" rows={3} />
+            </div>
+            <div>
+              <Label htmlFor="domain">Domain <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
+              <Input id="domain" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. infrastructure" />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div>
+                <Label htmlFor="softwareName">Software name</Label>
+                <Input id="softwareName" value={softwareName} onChange={(e) => setSoftwareName(e.target.value)} placeholder="e.g. PostgreSQL" />
+              </div>
+              <div>
+                <Label htmlFor="softwareVersion">Software version</Label>
+                <Input id="softwareVersion" value={softwareVersion} onChange={(e) => setSoftwareVersion(e.target.value)} placeholder="e.g. 16.2" />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="mediaUrl">Media URL</Label>
+              <Input id="mediaUrl" value={mediaUrl} onChange={(e) => setMediaUrl(e.target.value)} placeholder="https://…" />
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="softwareVersion">Software version</Label>
-            <Input id="softwareVersion" value={softwareVersion} onChange={(e) => setSoftwareVersion(e.target.value)} placeholder="e.g. 16.2" />
+        </section>
+
+        <section className="bp-card" style={{ padding: 18 }}>
+          <div className="bp-section-head"><h3>Knowledge</h3></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <TagInput label="Facts" values={facts} onChange={setFacts} placeholder="Atomic statement — press Enter" />
+            <TagInput label="Concepts" values={concepts} onChange={setConcepts} placeholder="Contextual knowledge — press Enter" />
+            <TagInput label="Tags" values={tags} onChange={setTags} placeholder="Tag — press Enter" />
           </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="mediaUrl">Media URL</Label>
-          <Input id="mediaUrl" value={mediaUrl} onChange={(e) => setMediaUrl(e.target.value)} placeholder="https://…" />
-        </div>
-
-        <TagInput label="Facts" values={facts} onChange={setFacts} placeholder="Atomic statement — press Enter" />
-        <TagInput label="Concepts" values={concepts} onChange={setConcepts} placeholder="Contextual knowledge — press Enter" />
-        <TagInput label="Tags" values={tags} onChange={setTags} placeholder="Tag — press Enter" />
+        </section>
 
         {saveError && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+          <div style={{ fontSize: 13, color: "var(--bp-danger)", background: "color-mix(in oklab, var(--bp-danger) 8%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-danger) 25%, var(--bp-border))", borderRadius: 12, padding: "10px 14px" }}>
             {saveError}
           </div>
         )}
 
-        <div className="flex items-center gap-3 pt-2">
-          <Button type="submit" disabled={!canSave || saveMutation.isPending}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button type="submit" className="bp-btn bp-btn--secondary" disabled={!canSave || saveMutation.isPending}>
             {saveMutation.isPending ? "Saving…" : "Save changes"}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => navigate(`/tasks/${task.record_id}/${task.version}`)}>
+          </button>
+          <button type="button" className="bp-btn bp-btn--ghost" onClick={() => navigate(`/tasks/${task.record_id}/${task.version}`)}>
             Cancel
-          </Button>
+          </button>
         </div>
       </form>
     </div>
