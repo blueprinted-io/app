@@ -16,6 +16,7 @@ import { TaskRedirectPage } from "@/pages/TaskRedirectPage";
 import { WorkflowsPage } from "@/pages/WorkflowsPage";
 import { WorkflowCreatePage } from "@/pages/WorkflowCreatePage";
 import { WorkflowDetailPage } from "@/pages/WorkflowDetailPage";
+import { WorkflowDiffPage } from "@/pages/WorkflowDiffPage";
 import { WorkflowEditPage } from "@/pages/WorkflowEditPage";
 import { PrinciplesPage } from "@/pages/PrinciplesPage";
 import { PrincipleCreatePage } from "@/pages/PrincipleCreatePage";
@@ -77,6 +78,7 @@ export function App() {
               <Route path="workflows" element={<WorkflowsPage />} />
               <Route path="workflows/new" element={<WorkflowCreatePage />} />
               <Route path="workflows/:id/edit" element={<WorkflowEditPage />} />
+              <Route path="workflows/:id/diff" element={<WorkflowDiffPage />} />
               <Route path="workflows/:id" element={<WorkflowDetailPage />} />
               <Route path="principles" element={<PrinciplesPage />} />
               <Route path="principles/new" element={<PrincipleCreatePage />} />

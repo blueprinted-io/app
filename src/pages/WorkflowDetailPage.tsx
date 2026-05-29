@@ -290,6 +290,11 @@ export function WorkflowDetailPage() {
               </Link>
             );
           })}
+          {workflow.version > 1 && (
+            <Link to={`/workflows/${workflow.id}/diff`} className="bp-muted" style={{ marginLeft: 4, fontSize: 12 }}>
+              View changes
+            </Link>
+          )}
         </div>
       )}
 
