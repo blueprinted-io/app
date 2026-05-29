@@ -35,7 +35,12 @@ function sourceLabel(ing: IngestionStatus): string {
 
 function isProcessing(ing: IngestionStatus): boolean {
   return ing.status === "pending" || ing.status === "chunking" ||
-    ing.chunks.some((c) => c.chunk_status === "queued" || c.chunk_status === "processing");
+    ing.chunks.some((c) =>
+      c.chunk_status === "queued" ||
+      c.chunk_status === "processing" ||
+      c.chunk_status === "extraction_queued" ||
+      c.chunk_status === "extracting"
+    );
 }
 
 function candidateCount(ing: IngestionStatus): number {
@@ -85,6 +90,8 @@ export function IngestionDetailPage() {
 
   const pendingChunks = ingestion.chunks.filter((c) => c.chunk_status === "pending");
   const needsSectionSelection = !needsNavSelection && pendingChunks.length > 0;
+
+  const triageCompleteChunks = ingestion.chunks.filter((c) => c.chunk_status === "triage_complete");
 
   return (
     <div className="bp-page" style={{ maxWidth: 620 }}>
@@ -160,6 +167,29 @@ export function IngestionDetailPage() {
             <Link to={`/ingestion/${ingestion.id}/sections`} className="bp-btn bp-btn--secondary">
               Select sections
             </Link>
+          </div>
+        )}
+
+        {triageCompleteChunks.length > 0 && (
+          <div className="bp-card" style={{ padding: 16 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "var(--bp-ink)", marginBottom: 4 }}>
+              Review estimates ({triageCompleteChunks.length} {triageCompleteChunks.length === 1 ? "section" : "sections"} ready)
+            </p>
+            <p className="bp-muted" style={{ fontSize: 13, marginBottom: 12 }}>
+              Triage is complete. Review, correct, or discard estimates for each section, then approve to trigger extraction.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {triageCompleteChunks.map((chunk) => (
+                <Link
+                  key={chunk.id}
+                  to={`/ingestion/${ingestion.id}/chunks/${chunk.id}/estimates`}
+                  className="bp-btn bp-btn--secondary"
+                  style={{ justifyContent: "flex-start" }}
+                >
+                  {chunk.section_title ?? `Section ${chunk.chunk_index + 1}`}
+                </Link>
+              ))}
+            </div>
           </div>
         )}
 

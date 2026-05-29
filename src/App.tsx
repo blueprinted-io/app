@@ -29,6 +29,7 @@ import { IngestionDetailPage } from "@/pages/IngestionDetailPage";
 import { SectionSelectionPage } from "@/pages/SectionSelectionPage";
 import { NavSelectionPage } from "@/pages/NavSelectionPage";
 import { CandidateReviewPage } from "@/pages/CandidateReviewPage";
+import { EstimateReviewPage } from "@/pages/EstimateReviewPage";
 import { NotificationsPage } from "@/pages/NotificationsPage";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
 import { AdminSettingsPage } from "@/pages/admin/AdminSettingsPage";
@@ -87,6 +88,7 @@ export function App() {
               <Route path="ingestion/:id/sections" element={<SectionSelectionPage />} />
               <Route path="ingestion/:id/nav-select" element={<NavSelectionPage />} />
               <Route path="ingestion/:id/candidates" element={<CandidateReviewPage />} />
+              <Route path="ingestion/:id/chunks/:chunkId/estimates" element={<EstimateReviewPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="search" element={<SearchPage />} />
               <Route path="admin" element={<AdminLayout />}>
