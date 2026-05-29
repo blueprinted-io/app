@@ -372,6 +372,11 @@ export function TaskDetailPage() {
               </Link>
             );
           })}
+          {task.version > 1 && (
+            <Link to={`/tasks/${recordId}/${task.version}/diff`} className="bp-muted" style={{ marginLeft: 4, fontSize: 12 }}>
+              View changes
+            </Link>
+          )}
         </div>
       )}
 
