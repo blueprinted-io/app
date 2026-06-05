@@ -33,6 +33,7 @@ import { NavSelectionPage } from "@/pages/NavSelectionPage";
 import { CandidateReviewPage } from "@/pages/CandidateReviewPage";
 import { EstimateReviewPage } from "@/pages/EstimateReviewPage";
 import { NotificationsPage } from "@/pages/NotificationsPage";
+import { RelationshipsPage } from "@/pages/RelationshipsPage";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
 import { AdminSettingsPage } from "@/pages/admin/AdminSettingsPage";
 import { AdminDomainsPage } from "@/pages/admin/AdminDomainsPage";
@@ -85,6 +86,7 @@ export function App() {
               <Route path="principles/:id/edit" element={<PrincipleEditPage />} />
               <Route path="principles/:id" element={<PrincipleDetailPage />} />
               <Route path="facts/*" element={<ComingSoon label="Facts & Concepts" />} />
+              <Route path="relationships" element={<RelationshipsPage />} />
               <Route path="review" element={<ReviewQueuePage />} />
               <Route path="ingestion" element={<IngestionListPage />} />
               <Route path="ingestion/new" element={<IngestionCreatePage />} />
