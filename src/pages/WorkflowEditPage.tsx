@@ -63,14 +63,14 @@ export function WorkflowEditPage() {
   const isDraft = workflow?.status === "draft";
 
   const { data: allTasks } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: () => api.get<TaskSummary[]>("/tasks"),
+    queryKey: ["tasks", "all"],
+    queryFn: () => api.getAllPages<TaskSummary>("/tasks"),
     enabled: isDraft,
   });
 
   const { data: allPrinciples } = useQuery({
-    queryKey: ["principles"],
-    queryFn: () => api.get<PrincipleSummary[]>("/principles"),
+    queryKey: ["principles", "all"],
+    queryFn: () => api.getAllPages<PrincipleSummary>("/principles"),
     enabled: isDraft,
   });
 

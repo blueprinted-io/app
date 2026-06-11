@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { api, type Page } from "@/lib/api";
 import { StatusBadge } from "@/components/StatusBadge";
+import { PaginationControls } from "@/components/PaginationControls";
 import {
   Table,
   TableBody,
@@ -29,10 +31,14 @@ function formatDate(iso: string): string {
   });
 }
 
+const PAGE_SIZE = 20;
+
 export function PrinciplesPage() {
+  const [offset, setOffset] = useState(0);
   const { data, isLoading, error } = useQuery({
-    queryKey: ["principles"],
-    queryFn: () => api.get<PrincipleSummary[]>("/principles"),
+    queryKey: ["principles", "list", offset],
+    queryFn: () => api.get<Page<PrincipleSummary>>(`/principles?limit=${PAGE_SIZE}&offset=${offset}`),
+    placeholderData: keepPreviousData,
   });
 
   return (
@@ -57,11 +63,11 @@ export function PrinciplesPage() {
         <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>Failed to load principles.</p>
       )}
 
-      {data && data.length === 0 && (
+      {data && data.total === 0 && (
         <p className="bp-muted" style={{ fontSize: 13 }}>No principles yet.</p>
       )}
 
-      {data && data.length > 0 && (
+      {data && data.total > 0 && (
         <Table>
           <TableHeader>
             <TableRow>
@@ -73,7 +79,7 @@ export function PrinciplesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((principle) => (
+            {data.items.map((principle) => (
               <TableRow key={principle.id}>
                 <TableCell>
                   <Link
@@ -94,6 +100,8 @@ export function PrinciplesPage() {
           </TableBody>
         </Table>
       )}
+
+      {data && <PaginationControls page={data} onOffsetChange={setOffset} />}
     </div>
   );
 }

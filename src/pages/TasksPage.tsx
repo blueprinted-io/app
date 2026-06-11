@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { api, type Page } from "@/lib/api";
 import { StatusBadge } from "@/components/StatusBadge";
+import { PaginationControls } from "@/components/PaginationControls";
 import {
   Table,
   TableBody,
@@ -31,10 +33,14 @@ function formatDate(iso: string): string {
   });
 }
 
+const PAGE_SIZE = 20;
+
 export function TasksPage() {
+  const [offset, setOffset] = useState(0);
   const { data, isLoading, error } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: () => api.get<TaskSummary[]>("/tasks"),
+    queryKey: ["tasks", "list", offset],
+    queryFn: () => api.get<Page<TaskSummary>>(`/tasks?limit=${PAGE_SIZE}&offset=${offset}`),
+    placeholderData: keepPreviousData,
   });
 
   return (
@@ -59,11 +65,11 @@ export function TasksPage() {
         <p style={{ fontSize: 13, color: "var(--bp-danger)" }}>Failed to load tasks.</p>
       )}
 
-      {data && data.length === 0 && (
+      {data && data.total === 0 && (
         <p className="bp-muted" style={{ fontSize: 13 }}>No tasks found.</p>
       )}
 
-      {data && data.length > 0 && (
+      {data && data.total > 0 && (
         <Table>
           <TableHeader>
             <TableRow>
@@ -75,7 +81,7 @@ export function TasksPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((task) => (
+            {data.items.map((task) => (
               <TableRow key={task.id}>
                 <TableCell>
                   <Link
@@ -102,6 +108,8 @@ export function TasksPage() {
           </TableBody>
         </Table>
       )}
+
+      {data && <PaginationControls page={data} onOffsetChange={setOffset} />}
     </div>
   );
 }

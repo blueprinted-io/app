@@ -45,13 +45,13 @@ export function WorkflowCreatePage() {
   const [principlePickerOpen, setPrinciplePickerOpen] = useState(false);
 
   const { data: allTasks } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: () => api.get<TaskSummary[]>("/tasks"),
+    queryKey: ["tasks", "all"],
+    queryFn: () => api.getAllPages<TaskSummary>("/tasks"),
   });
 
   const { data: allPrinciples } = useQuery({
-    queryKey: ["principles"],
-    queryFn: () => api.get<PrincipleSummary[]>("/principles"),
+    queryKey: ["principles", "all"],
+    queryFn: () => api.getAllPages<PrincipleSummary>("/principles"),
   });
 
   const confirmedTasks = (allTasks ?? []).filter((t) => t.status === "confirmed");

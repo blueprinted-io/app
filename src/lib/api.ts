@@ -42,8 +42,31 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+export interface Page<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// Server-enforced maximum page size (spec §6, v4.11).
+const MAX_PAGE_LIMIT = 100;
+
+async function getAllPages<T>(path: string): Promise<T[]> {
+  const sep = path.includes("?") ? "&" : "?";
+  const items: T[] = [];
+  for (;;) {
+    const page = await request<Page<T>>(
+      `${path}${sep}limit=${MAX_PAGE_LIMIT}&offset=${items.length}`
+    );
+    items.push(...page.items);
+    if (items.length >= page.total || page.items.length === 0) return items;
+  }
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
+  getAllPages,
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "POST", body: JSON.stringify(body) }),
   put: <T>(path: string, body?: unknown) =>
