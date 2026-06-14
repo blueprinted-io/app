@@ -1,18 +1,11 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, ApiError } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ReturnDialog } from "@/components/ReturnDialog";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-interface ClaimInfo {
-  claimed_by: string;
-  expires_at: string;
-}
 
 interface QueueItem {
   id: string;
@@ -21,17 +14,11 @@ interface QueueItem {
   domain: string | null;
   status: string;
   updated_at: string;
-  created_by: string;
-  claim: ClaimInfo | null;
 }
 
 interface QueueResponse {
   items: QueueItem[];
   total: number;
-}
-
-interface CurrentUser {
-  id: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -44,11 +31,11 @@ const TYPE_LABEL: Record<string, string> = {
   principle: "Principle",
 };
 
-const TYPE_PLURAL: Record<string, string> = {
-  task: "tasks",
-  workflow: "workflows",
-  principle: "principles",
-};
+function recordHref(item: QueueItem): string {
+  if (item.record_type === "task") return `/tasks/id/${item.id}`;
+  if (item.record_type === "workflow") return `/workflows/${item.id}`;
+  return `/principles/${item.id}`;
+}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -56,12 +43,6 @@ function formatDate(iso: string): string {
     month: "short",
     year: "numeric",
   });
-}
-
-function recordHref(item: QueueItem): string {
-  if (item.record_type === "task") return `/tasks/id/${item.id}`;
-  if (item.record_type === "workflow") return `/workflows/${item.id}`;
-  return `/principles/${item.id}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -78,117 +59,6 @@ const typePillStyle: React.CSSProperties = {
   whiteSpace: "nowrap" as const,
 };
 
-function QueueRow({
-  item,
-  currentUserId,
-  onActionError,
-}: {
-  item: QueueItem;
-  currentUserId: string | undefined;
-  onActionError: (msg: string) => void;
-}) {
-  const queryClient = useQueryClient();
-  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
-  const entityType = TYPE_PLURAL[item.record_type] ?? item.record_type;
-  const href = recordHref(item);
-
-  function onSuccess() {
-    queryClient.invalidateQueries({ queryKey: ["review-queue"] });
-  }
-
-  function onError(err: unknown) {
-    const msg =
-      err instanceof ApiError ? err.message : "An unexpected error occurred.";
-    onActionError(msg);
-  }
-
-  const claimMutation = useMutation({
-    mutationFn: () => api.post(`/review/${entityType}/${item.id}/claim`),
-    onSuccess,
-    onError,
-  });
-
-  const returnMutation = useMutation({
-    mutationFn: (note: string) => api.post(`/review/${entityType}/${item.id}/return`, { note }),
-    onSuccess: () => { setReturnDialogOpen(false); onSuccess(); },
-    onError,
-  });
-
-  const releaseMutation = useMutation({
-    mutationFn: () => api.post(`/review/${entityType}/${item.id}/release`),
-    onSuccess,
-    onError,
-  });
-
-  const anyPending =
-    claimMutation.isPending ||
-    returnMutation.isPending ||
-    releaseMutation.isPending;
-
-  const claimedByMe = !!currentUserId && item.claim?.claimed_by === currentUserId;
-  const claimedByOther = !!item.claim && !claimedByMe;
-
-  return (
-    <tr style={{ borderBottom: "1px solid var(--bp-border)" }}>
-      <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
-        <span style={typePillStyle}>{TYPE_LABEL[item.record_type] ?? item.record_type}</span>
-      </td>
-      <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
-        <Link to={href} style={{ fontSize: 13, fontWeight: 600, color: "var(--bp-ink)", textDecoration: "none" }}>
-          {item.title}
-        </Link>
-        {item.domain && (
-          <p style={{ marginTop: 2, fontSize: 11, color: "var(--bp-muted)" }}>{item.domain}</p>
-        )}
-      </td>
-      <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
-        <StatusBadge status={item.status} />
-      </td>
-      <td style={{ padding: "10px 14px", verticalAlign: "top", fontSize: 12, color: "var(--bp-muted)", whiteSpace: "nowrap" }}>
-        {formatDate(item.updated_at)}
-      </td>
-      <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
-        {claimedByMe && (
-          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--bp-accent-deep)" }}>Claimed by you</span>
-        )}
-        {claimedByOther && (
-          <span style={{ fontSize: 11, color: "var(--bp-muted)" }}>Claimed</span>
-        )}
-      </td>
-      <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          {claimedByMe ? (
-            <button className="bp-btn bp-btn--ghost" style={{ fontSize: 12, padding: "4px 10px" }}
-              onClick={() => releaseMutation.mutate()} disabled={anyPending}>
-              {releaseMutation.isPending ? "Releasing…" : "Release"}
-            </button>
-          ) : (
-            <button className="bp-btn bp-btn--ghost" style={{ fontSize: 12, padding: "4px 10px" }}
-              onClick={() => claimMutation.mutate()} disabled={anyPending || claimedByOther}
-              title={claimedByOther ? "Claimed by another reviewer" : undefined}>
-              {claimMutation.isPending ? "Claiming…" : "Claim"}
-            </button>
-          )}
-          <button className="bp-btn bp-btn--ghost" style={{ fontSize: 12, padding: "4px 10px" }}
-            onClick={() => setReturnDialogOpen(true)} disabled={anyPending}>
-            Return
-          </button>
-          <ReturnDialog
-            open={returnDialogOpen}
-            onOpenChange={setReturnDialogOpen}
-            onConfirm={(note) => returnMutation.mutate(note)}
-            isPending={returnMutation.isPending}
-          />
-        </div>
-      </td>
-    </tr>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
-
 const thStyle: React.CSSProperties = {
   padding: "10px 14px",
   textAlign: "left",
@@ -200,23 +70,44 @@ const thStyle: React.CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-export function ReviewQueuePage() {
-  const queryClient = useQueryClient();
+function QueueRow({ item }: { item: QueueItem }) {
+  const navigate = useNavigate();
 
+  return (
+    <tr
+      style={{ borderBottom: "1px solid var(--bp-border)", cursor: "pointer" }}
+      onClick={() => navigate(recordHref(item))}
+    >
+      <td style={{ padding: "10px 14px", verticalAlign: "middle" }}>
+        <span style={typePillStyle}>{TYPE_LABEL[item.record_type] ?? item.record_type}</span>
+      </td>
+      <td style={{ padding: "10px 14px", verticalAlign: "middle" }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--bp-ink)" }}>
+          {item.title}
+        </span>
+        {item.domain && (
+          <p style={{ marginTop: 2, fontSize: 11, color: "var(--bp-muted)" }}>{item.domain}</p>
+        )}
+      </td>
+      <td style={{ padding: "10px 14px", verticalAlign: "middle" }}>
+        <StatusBadge status={item.status} />
+      </td>
+      <td style={{ padding: "10px 14px", verticalAlign: "middle", fontSize: 12, color: "var(--bp-muted)", whiteSpace: "nowrap" }}>
+        {formatDate(item.updated_at)}
+      </td>
+    </tr>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
+export function ReviewQueuePage() {
   const { data: queue, isLoading, error } = useQuery({
     queryKey: ["review-queue"],
     queryFn: () => api.get<QueueResponse>("/review/queue"),
   });
-
-  const { data: currentUser } = useQuery({
-    queryKey: ["me"],
-    queryFn: () => api.get<CurrentUser>("/users/me"),
-  });
-
-  function handleActionError(msg: string) {
-    queryClient.invalidateQueries({ queryKey: ["review-queue"] });
-    window.alert(msg);
-  }
 
   return (
     <div className="bp-page">
@@ -244,7 +135,7 @@ export function ReviewQueuePage() {
           <p className="bp-muted" style={{ fontSize: 13 }}>
             {queue.total} item{queue.total !== 1 ? "s" : ""} awaiting review
           </p>
-          <div className="bp-card" style={{ overflow: "hidden" }}>
+          <div className="bp-card" style={{ overflow: "hidden", overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr>
@@ -252,18 +143,11 @@ export function ReviewQueuePage() {
                   <th style={thStyle}>Title</th>
                   <th style={thStyle}>Status</th>
                   <th style={thStyle}>Submitted</th>
-                  <th style={thStyle}>Claim</th>
-                  <th style={thStyle}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {queue.items.map((item) => (
-                  <QueueRow
-                    key={item.id}
-                    item={item}
-                    currentUserId={currentUser?.id}
-                    onActionError={handleActionError}
-                  />
+                  <QueueRow key={item.id} item={item} />
                 ))}
               </tbody>
             </table>
