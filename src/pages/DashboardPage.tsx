@@ -147,7 +147,7 @@ export function DashboardPage() {
         <>
           {/* Contributor section — always visible */}
           <SectionHead title="My work" />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+          <div className="bp-grid-3" style={{ gap: 12 }}>
             <StatCard label="Drafts" value={data.contributor.my_drafts} />
             <StatCard label="Awaiting review" value={data.contributor.my_submitted} />
             <StatCard
@@ -198,23 +198,19 @@ export function DashboardPage() {
 
           {/* Review section — always visible */}
           <SectionHead title="Review queue" />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-            <div style={{ gridColumn: "1 / 2" }}>
-              <Link to="/review" style={{ textDecoration: "none" }}>
-                <StatCard
-                  label="Awaiting review in my domains"
-                  value={data.reviewer.queue_depth}
-                  accent={data.reviewer.queue_depth > 0}
-                />
-              </Link>
-            </div>
-          </div>
+          <Link to="/review" style={{ textDecoration: "none" }}>
+            <StatCard
+              label="Awaiting review in my domains"
+              value={data.reviewer.queue_depth}
+              accent={data.reviewer.queue_depth > 0}
+            />
+          </Link>
 
           {/* Admin section */}
           {data.admin && (
             <>
               <SectionHead title="Platform health" />
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+              <div className="bp-grid-3" style={{ gap: 12 }}>
                 <StatCard label="Confirmed (30 days)" value={data.admin.confirmed_30d} accent />
                 <StatCard label="Return rate (30 days)" value={pct(data.admin.return_rate_30d)} />
                 <StatCard
