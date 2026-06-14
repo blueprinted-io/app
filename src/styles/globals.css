@@ -308,6 +308,7 @@
 /* ---- Responsive grid utilities ---- */
 .bp-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .bp-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.bp-diff-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
 /* ---- Mobile header (hamburger bar) ---- */
 .bp-mobile-header {
@@ -384,6 +385,10 @@
   }
 
   .bp-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .bp-diff-row {
     grid-template-columns: 1fr;
   }
 

@@ -265,7 +265,7 @@ export function TaskCreatePage() {
               <Label htmlFor="domain">Domain <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
               <Input id="domain" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. linux-sysadmin" required />
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div className="bp-grid-2" style={{ gap: 12 }}>
               <div>
                 <Label htmlFor="software-name">Software</Label>
                 <Input id="software-name" value={softwareName} onChange={(e) => setSoftwareName(e.target.value)} placeholder="e.g. nginx" />

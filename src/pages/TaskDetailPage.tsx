@@ -449,7 +449,7 @@ export function TaskDetailPage() {
       )}
 
       <Section title="Details">
-        <dl style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 32px" }}>
+        <dl className="bp-grid-2" style={{ gap: "8px 32px" }}>
           {[
             ["Created", formatDate(task.created_at)],
             ["Last updated", formatDate(task.updated_at)],

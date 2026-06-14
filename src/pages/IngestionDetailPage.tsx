@@ -125,7 +125,7 @@ export function IngestionDetailPage() {
       )}
 
       <div className="bp-card" style={{ padding: 16, marginBottom: 20 }}>
-        <dl style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+        <dl className="bp-grid-3" style={{ gap: 16 }}>
           {ingestion.page_count != null && (
             <div>
               <dt style={{ fontSize: 11, color: "var(--bp-muted)", marginBottom: 2 }}>Pages</dt>

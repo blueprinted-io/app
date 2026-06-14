@@ -44,11 +44,6 @@ function changed(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) !== JSON.stringify(b);
 }
 
-const rowStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 12,
-};
 
 const cellStyle = (highlighted: boolean): React.CSSProperties => ({
   padding: "10px 12px",
@@ -77,7 +72,7 @@ function FieldRow({ label, prev, curr }: { label: string; prev: React.ReactNode;
   return (
     <div>
       <p style={labelStyle}>{label}</p>
-      <div style={rowStyle}>
+      <div className="bp-diff-row">
         <div style={cellStyle(false)}>{prev ?? <span style={{ opacity: 0.4 }}>—</span>}</div>
         <div style={cellStyle(true)}>{curr ?? <span style={{ opacity: 0.4 }}>—</span>}</div>
       </div>
@@ -270,7 +265,7 @@ export function WorkflowDiffPage() {
       </div>
 
       {/* Version header row */}
-      <div style={rowStyle}>
+      <div className="bp-diff-row">
         <div style={{ padding: "8px 12px", borderRadius: 8, background: "var(--bp-panel)", border: "1px solid var(--bp-border)" }}>
           <p style={{ ...labelStyle, marginBottom: 2 }}>Previous</p>
           <span style={{ fontSize: 13, fontWeight: 600 }}>v{previous.version}</span>

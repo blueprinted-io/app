@@ -151,7 +151,7 @@ export function TaskEditPage() {
               <Label htmlFor="domain">Domain <span style={{ color: "var(--bp-danger)" }}>*</span></Label>
               <Input id="domain" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. infrastructure" />
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div className="bp-grid-2" style={{ gap: 12 }}>
               <div>
                 <Label htmlFor="softwareName">Software name</Label>
                 <Input id="softwareName" value={softwareName} onChange={(e) => setSoftwareName(e.target.value)} placeholder="e.g. PostgreSQL" />

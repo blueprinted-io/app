@@ -370,7 +370,7 @@ export function WorkflowDetailPage() {
       )}
 
       <Section title="Details">
-        <dl style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 32px" }}>
+        <dl className="bp-grid-2" style={{ gap: "8px 32px" }}>
           {[
             ["Created", formatDate(workflow.created_at)],
             ["Last updated", formatDate(workflow.updated_at)],
