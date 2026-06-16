@@ -8,6 +8,8 @@ interface IngestionChunk {
   id: string;
   chunk_index: number;
   section_title: string | null;
+  source_url: string | null;
+  nav_page_id: string | null;
   chunk_status: string;
   candidate_count: number;
   word_count: number;
@@ -25,6 +27,57 @@ interface IngestionStatus {
   created_at: string;
   updated_at: string;
   chunks: IngestionChunk[];
+}
+
+function pageLabel(url: string): string {
+  try {
+    return new URL(url).pathname.replace(/\/$/, "") || "/";
+  } catch {
+    return url;
+  }
+}
+
+function TriageChunkList({
+  ingestionId,
+  chunks,
+}: {
+  ingestionId: string;
+  chunks: IngestionChunk[];
+}) {
+  // Group by source_url (stable page identity). Chunks without source_url go in a null group.
+  const groups = new Map<string | null, IngestionChunk[]>();
+  for (const chunk of chunks) {
+    const key = chunk.source_url ?? null;
+    const existing = groups.get(key) ?? [];
+    groups.set(key, [...existing, chunk]);
+  }
+  const hasMultiplePages = groups.size > 1;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: hasMultiplePages ? 16 : 8 }}>
+      {Array.from(groups.entries()).map(([url, pageChunks]) => (
+        <div key={url ?? "_ungrouped"}>
+          {hasMultiplePages && url && (
+            <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".05em", color: "var(--bp-muted)", marginBottom: 6 }}>
+              {pageLabel(url)}
+            </p>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {pageChunks.map((chunk) => (
+              <Link
+                key={chunk.id}
+                to={`/ingestion/${ingestionId}/chunks/${chunk.id}/estimates`}
+                className="bp-btn bp-btn--secondary"
+                style={{ justifyContent: "flex-start" }}
+              >
+                {chunk.section_title ?? `Section ${chunk.chunk_index + 1}`}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function sourceLabel(ing: IngestionStatus): string {
@@ -178,18 +231,7 @@ export function IngestionDetailPage() {
             <p className="bp-muted" style={{ fontSize: 13, marginBottom: 12 }}>
               Triage is complete. Review, correct, or discard estimates for each section, then approve to trigger extraction.
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {triageCompleteChunks.map((chunk) => (
-                <Link
-                  key={chunk.id}
-                  to={`/ingestion/${ingestion.id}/chunks/${chunk.id}/estimates`}
-                  className="bp-btn bp-btn--secondary"
-                  style={{ justifyContent: "flex-start" }}
-                >
-                  {chunk.section_title ?? `Section ${chunk.chunk_index + 1}`}
-                </Link>
-              ))}
-            </div>
+            <TriageChunkList ingestionId={ingestion.id} chunks={triageCompleteChunks} />
           </div>
         )}
 

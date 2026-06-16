@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ReturnDialog } from "@/components/ReturnDialog";
+import { MarkdownBody } from "@/components/MarkdownBody";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -140,13 +141,13 @@ function StepCard({ step, index }: { step: TaskStep; index: number }) {
           {step.notes && (
             <div style={{ background: "color-mix(in oklab, var(--bp-accent-blue) 8%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-accent-blue) 20%, var(--bp-border))", borderRadius: 8, padding: "8px 12px" }}>
               <p style={{ ...subLabelStyle, color: "var(--bp-accent-blue)" }}>Note</p>
-              <p style={{ fontSize: 13, margin: 0, color: "var(--bp-ink)" }}>{step.notes}</p>
+              <MarkdownBody style={{ fontSize: 13 }}>{step.notes}</MarkdownBody>
             </div>
           )}
 
           <div style={{ background: "color-mix(in oklab, var(--bp-ok) 8%, var(--bp-panel))", border: "1px solid color-mix(in oklab, var(--bp-ok) 22%, var(--bp-border))", borderRadius: 8, padding: "8px 12px" }}>
             <p style={{ ...subLabelStyle, color: "var(--bp-ok)" }}>Done when</p>
-            <p style={{ fontSize: 13, margin: 0, color: "var(--bp-ink)" }}>{step.completion}</p>
+            <MarkdownBody style={{ fontSize: 13 }}>{step.completion}</MarkdownBody>
           </div>
         </div>
       </div>
@@ -398,7 +399,7 @@ export function TaskDetailPage() {
 
       {/* Content sections */}
       <Section title="Outcome">
-        <p style={{ fontSize: 14, color: "var(--bp-ink)", margin: 0 }}>{task.outcome}</p>
+        <MarkdownBody>{task.outcome}</MarkdownBody>
       </Section>
 
       {task.facts.length > 0 && (

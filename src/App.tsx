@@ -7,6 +7,7 @@ import { LoginPage } from "@/pages/LoginPage";
 import { CallbackPage } from "@/pages/CallbackPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { ProfilePage } from "@/pages/ProfilePage";
+import { SettingsPage } from "@/pages/SettingsPage";
 import { TasksPage } from "@/pages/TasksPage";
 import { TaskCreatePage } from "@/pages/TaskCreatePage";
 import { TaskDetailPage } from "@/pages/TaskDetailPage";
@@ -69,6 +70,7 @@ export function App() {
             >
               <Route index element={<DashboardPage />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="settings" element={<SettingsPage />} />
               {/* Stub routes — screens added in subsequent sessions */}
               <Route path="tasks" element={<TasksPage />} />
               <Route path="tasks/new" element={<TaskCreatePage />} />

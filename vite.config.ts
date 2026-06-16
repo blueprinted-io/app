@@ -10,6 +10,7 @@ export default defineConfig({
     },
   },
   server: {
+    allowedHosts: true,
     proxy: {
       // In dev, proxy /api to the backend so CORS is never an issue.
       "/api": {

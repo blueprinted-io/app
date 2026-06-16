@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api";
 import { StatusBadge } from "@/components/StatusBadge";
+import { MarkdownBody } from "@/components/MarkdownBody";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,7 +57,6 @@ const cellStyle = (highlighted: boolean): React.CSSProperties => ({
   border: `1px solid ${highlighted ? "color-mix(in oklab, var(--bp-warn) 35%, var(--bp-border))" : "var(--bp-border)"}`,
   color: "var(--bp-ink)",
   wordBreak: "break-word",
-  whiteSpace: "pre-wrap",
 });
 
 const labelStyle: React.CSSProperties = {
@@ -243,11 +243,18 @@ export function WorkflowDiffPage() {
 
   const { current, previous } = data;
 
+  const markdownFields = new Set<keyof WorkflowSnapshot>(["objective"]);
+
   const fields: Array<{ key: keyof WorkflowSnapshot; label: string }> = [
     { key: "title", label: "Title" },
     { key: "objective", label: "Objective" },
     { key: "domain", label: "Domain" },
   ];
+
+  function renderFieldValue(key: keyof WorkflowSnapshot, raw: string | null): React.ReactNode {
+    if (raw == null) return null;
+    return markdownFields.has(key) ? <MarkdownBody style={{ fontSize: 13 }}>{raw}</MarkdownBody> : raw;
+  }
 
   return (
     <div className="bp-page" style={{ maxWidth: 820 }}>
@@ -292,10 +299,12 @@ export function WorkflowDiffPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {fields.map(({ key, label }) => {
             const isChanged = changed(current[key], previous[key]);
+            const prevRaw = (previous[key] as string) ?? null;
+            const currRaw = (current[key] as string) ?? null;
             return isChanged ? (
-              <FieldRow key={key} label={label} prev={previous[key] as string ?? null} curr={current[key] as string ?? null} />
+              <FieldRow key={key} label={label} prev={renderFieldValue(key, prevRaw)} curr={renderFieldValue(key, currRaw)} />
             ) : (
-              <UnchangedFieldRow key={key} label={label} value={current[key] as string ?? null} />
+              <UnchangedFieldRow key={key} label={label} value={renderFieldValue(key, currRaw)} />
             );
           })}
         </div>

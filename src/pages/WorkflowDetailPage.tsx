@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ReturnDialog } from "@/components/ReturnDialog";
+import { MarkdownBody } from "@/components/MarkdownBody";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -316,7 +317,7 @@ export function WorkflowDetailPage() {
 
       {/* Content sections */}
       <Section title="Objective">
-        <p style={{ fontSize: 14, color: "var(--bp-ink)", margin: 0 }}>{workflow.objective}</p>
+        <MarkdownBody>{workflow.objective}</MarkdownBody>
       </Section>
 
       {workflow.task_refs.length > 0 && (

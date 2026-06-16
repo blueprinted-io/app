@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ReturnDialog } from "@/components/ReturnDialog";
+import { MarkdownBody } from "@/components/MarkdownBody";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -298,16 +299,16 @@ export function PrincipleDetailPage() {
 
       {/* Content sections */}
       <Section title="Summary">
-        <p style={{ fontSize: 14, color: "var(--bp-ink)", margin: 0 }}>{principle.summary}</p>
+        <MarkdownBody>{principle.summary}</MarkdownBody>
       </Section>
 
       <Section title="Explanation">
-        <p style={{ fontSize: 14, color: "var(--bp-ink)", margin: 0, whiteSpace: "pre-wrap" }}>{principle.explanation}</p>
+        <MarkdownBody>{principle.explanation}</MarkdownBody>
       </Section>
 
       {principle.analogies && (
         <Section title="Analogies">
-          <p style={{ fontSize: 14, color: "var(--bp-ink)", margin: 0, whiteSpace: "pre-wrap" }}>{principle.analogies}</p>
+          <MarkdownBody>{principle.analogies}</MarkdownBody>
         </Section>
       )}
 
