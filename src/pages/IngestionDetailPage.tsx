@@ -27,6 +27,7 @@ interface IngestionStatus {
   created_at: string;
   updated_at: string;
   chunks: IngestionChunk[];
+  nav_pages_rendering: number;
 }
 
 function pageLabel(url: string): string {
@@ -88,6 +89,7 @@ function sourceLabel(ing: IngestionStatus): string {
 
 function isProcessing(ing: IngestionStatus): boolean {
   return ing.status === "pending" || ing.status === "chunking" ||
+    ing.nav_pages_rendering > 0 ||
     ing.chunks.some((c) =>
       c.chunk_status === "queued" ||
       c.chunk_status === "processing" ||
@@ -139,7 +141,8 @@ export function IngestionDetailPage() {
   const needsNavSelection =
     ingestion.source_type === "html" &&
     ingestion.status === "ready" &&
-    ingestion.chunks.length === 0;
+    ingestion.chunks.length === 0 &&
+    ingestion.nav_pages_rendering === 0;
 
   const pendingChunks = ingestion.chunks.filter((c) => c.chunk_status === "pending");
   const needsSectionSelection = !needsNavSelection && pendingChunks.length > 0;
